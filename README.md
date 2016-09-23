@@ -2,7 +2,15 @@
 
 Protects your data by inspecting incoming queries from your application server and rejecting abnormal ones. it also supports data masking to avoid data leaks.
 
- List of currently supported Databases:
+# How it works?
+
+
+!https://cdn.rawgit.com/nim4/DBShield/master/how_01.png)
+!https://cdn.rawgit.com/nim4/DBShield/master/how_02.png)
+!(https://cdn.rawgit.com/nim4/DBShield/master/how_03.png)
+
+
+# Supported Databases:
 
 | Database      | Protect       | Data Masking  |
 | ------------- |:-------------:| -------------:|
