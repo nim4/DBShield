@@ -5,9 +5,9 @@ Protects your data by inspecting incoming queries from your application server a
 # How it works?
 
 
-!(https://cdn.rawgit.com/nim4/DBShield/master/misc/how_01.png)
-!(https://cdn.rawgit.com/nim4/DBShield/master/misc/how_02.png)
-!(https://cdn.rawgit.com/nim4/DBShield/master/misc/how_03.png)
+![Sample Web Server and DB](https://cdn.rawgit.com/nim4/DBShield/master/misc/how_01.png)
+![Learning mode](https://cdn.rawgit.com/nim4/DBShield/master/misc/how_02.png)
+![Protect mode](https://cdn.rawgit.com/nim4/DBShield/master/misc/how_03.png)
 
 
 # Supported Databases:
