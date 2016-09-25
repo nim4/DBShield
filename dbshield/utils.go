@@ -7,12 +7,12 @@ import (
 	"os/signal"
 	"strings"
 
-	"./config"
-	"./dbms"
-	"./logger"
-	"./training"
-	"./utils"
 	"github.com/boltdb/bolt"
+	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/dbms"
+	"github.com/nim4/DBShield/dbshield/logger"
+	"github.com/nim4/DBShield/dbshield/training"
+	"github.com/nim4/DBShield/dbshield/utils"
 )
 
 func initModel() {

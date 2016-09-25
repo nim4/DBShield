@@ -1,6 +1,6 @@
 package dbshield
 
-import "./utils"
+import "github.com/nim4/DBShield/dbshield/utils"
 
 func worker(tasks <-chan utils.DBMS, results chan<- error) {
 	for dbms := range tasks {

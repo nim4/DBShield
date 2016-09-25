@@ -2,7 +2,7 @@
 
 Protects your data by inspecting incoming queries from your application server and rejecting abnormal ones. It also supports data masking to avoid data leaks.
 
-# How it works?
+## How it works?
 
 For example, this is how web server normally interacts with database server:
 
@@ -17,8 +17,13 @@ After collecting enough patterns we can run DBShield in protect mode. Protect mo
 
 ![Protect mode](https://cdn.rawgit.com/nim4/DBShield/master/misc/how_03.png)
 
+## Installation
 
-# Supported Databases:
+```
+
+```
+
+## Supported Databases:
 
 | Database      | Protect       | Data Masking  |
 | ------------- |:-------------:| -------------:|

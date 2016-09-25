@@ -3,7 +3,7 @@ package utils
 import (
 	"net"
 
-	"../logger"
+	"github.com/nim4/DBShield/dbshield/logger"
 )
 
 //ActionDrop will close the connection

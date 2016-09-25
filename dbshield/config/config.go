@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"../logger"
-	"../utils"
+	"github.com/nim4/DBShield/dbshield/logger"
+	"github.com/nim4/DBShield/dbshield/utils"
 	"github.com/spf13/viper"
 )
 
