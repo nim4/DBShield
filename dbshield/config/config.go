@@ -57,7 +57,7 @@ func ParseConfig(configFile string) error {
 		return fmt.Errorf("Fatal error config file: %s \n", err)
 	}
 	Config.DBDir = viper.GetString("dbDir")
-	os.Mkdir(Config.DBDir, 0700)
+	os.Mkdir(Config.DBDir, 0740)
 	//set default values
 	Config.DBType = viper.GetString("dbms")
 	switch viper.GetString("mode") {
