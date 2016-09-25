@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"regexp"
 	"strings"
 
@@ -31,6 +32,7 @@ var Config = struct {
 	DB     utils.DBMS
 
 	Threads uint
+	DBDir   string
 
 	ListenIP   string
 	ListenPort uint
@@ -54,9 +56,10 @@ func ParseConfig(configFile string) error {
 	if err != nil {             // Handle errors reading the config file
 		return fmt.Errorf("Fatal error config file: %s \n", err)
 	}
+	Config.DBDir = viper.GetString("dbDir")
+	os.Mkdir(Config.DBDir, 0600)
 	//set default values
 	Config.DBType = viper.GetString("dbms")
-
 	switch viper.GetString("mode") {
 	case "protect":
 		Config.Learning = false

@@ -13,15 +13,21 @@ By adding DBShield in front of database server we can protect it against abnorma
 ![Learning mode](https://cdn.rawgit.com/nim4/DBShield/master/misc/how_02.png)
 
 
-After collecting enough patterns we can run DBShield in protect mode. Protect mode can distinguish abnormal query patterns, request time, user and source and take action based on configurations. It can also replace results of normal queries by applying data masking (ex. replace each digit of CC number by X except the last three digits)
+After collecting enough patterns we can run DBShield in protect mode. Protect mode can distinguish abnormal query patterns, request time, user and source and take action based on configurations. It can also replace results of normal queries by applying data masking (ex. replace each digit of CC number by "X" except the last three digits)
 
 ![Protect mode](https://cdn.rawgit.com/nim4/DBShield/master/misc/how_03.png)
 
 ## Installation
 
+```bash
+$ go get github.com/nim4/DBShield
+$ go install github.com/nim4/DBShield
+# Copy the sample config file
+$ sudo cp $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml /etc/dbshield.yml
+$ $GOPATH/bin/DBShield
 ```
 
-```
+
 
 ## Supported Databases:
 
