@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 
-	"./dbshield"
+	"github.com/nim4/DBShield/dbshield"
 )
 
 func main() {

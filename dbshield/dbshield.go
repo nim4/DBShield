@@ -4,9 +4,9 @@ import (
 	"net"
 	"strconv"
 
-	"./config"
-	"./logger"
-	"./utils"
+	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/logger"
+	"github.com/nim4/DBShield/dbshield/utils"
 )
 
 //Start the proxy

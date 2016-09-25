@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"../config"
-	"../logger"
-	"../sql"
 	"github.com/boltdb/bolt"
+	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/logger"
+	"github.com/nim4/DBShield/dbshield/sql"
 )
 
 //DBCon holds a pointer to our local database connection

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"net"
 
-	"../config"
+	"github.com/nim4/DBShield/dbshield/config"
 
-	"../logger"
+	"github.com/nim4/DBShield/dbshield/logger"
 )
 
 func pascalString(data []byte) (str string, size uint) {

@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"../config"
-	"../logger"
-	"../sql"
-	"../training"
+	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/logger"
+	"github.com/nim4/DBShield/dbshield/sql"
+	"github.com/nim4/DBShield/dbshield/training"
 )
 
 //Oracle DBMS
