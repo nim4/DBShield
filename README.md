@@ -4,8 +4,11 @@ Protects your data by inspecting incoming queries from your application server a
 
 # How it works?
 
+For example this is how your web server normally interacts with database:
 
 ![Sample Web Server and DB](https://cdn.rawgit.com/nim4/DBShield/master/misc/how_01.png)
+
+
 ![Learning mode](https://cdn.rawgit.com/nim4/DBShield/master/misc/how_02.png)
 ![Protect mode](https://cdn.rawgit.com/nim4/DBShield/master/misc/how_03.png)
 
