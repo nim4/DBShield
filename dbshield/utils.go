@@ -17,7 +17,7 @@ import (
 
 func initModel() {
 	var err error
-	training.DBCon, err = bolt.Open(fmt.Sprintf("%s/%s_%s.db", config.Config.DBDir, config.Config.TargetIP, config.Config.DBType), 0600, nil)
+	training.DBCon, err = bolt.Open(fmt.Sprintf("%s%s_%s.db", config.Config.DBDir, config.Config.TargetIP, config.Config.DBType), 0600, nil)
 	if err != nil {
 		panic(err)
 	}
