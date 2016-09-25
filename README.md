@@ -19,12 +19,13 @@ After collecting enough patterns we can run DBShield in protect mode. Protect mo
 
 ## Installation
 
-```bash
+```
 $ go get github.com/nim4/DBShield
-$ go install github.com/nim4/DBShield
-# Copy the sample config file
-$ sudo cp $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml /etc/dbshield.yml
-$ $GOPATH/bin/DBShield
+```
+
+then you can execute it like:
+```
+$ $GOPATH/bin/DBShield $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 ```
 
 
