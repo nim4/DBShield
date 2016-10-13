@@ -30,6 +30,7 @@ func initModel() {
 	}
 }
 
+//catching Interrupts
 func initSignal() {
 	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt)
@@ -37,6 +38,7 @@ func initSignal() {
 		for {
 			<-term
 			logger.Info("Shutting down...")
+			//Closing open handler politely
 			if training.DBCon != nil {
 				training.DBCon.Close()
 			}
@@ -48,7 +50,7 @@ func initSignal() {
 	}()
 }
 
-//initLogging redirect log output to file
+//initLogging redirect log output to file/stdout/stderr
 func initLogging() {
 	switch config.Config.LogPath {
 	case "stdout":
