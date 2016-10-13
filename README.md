@@ -25,7 +25,7 @@ $ go get github.com/nim4/DBShield
 
 then you can execute it like:
 ```
-$ $GOPATH/bin/DBShield $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
+$ $GOPATH/bin/DBShield -f $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 ```
 
 
