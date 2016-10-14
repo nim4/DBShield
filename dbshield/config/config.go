@@ -52,6 +52,7 @@ var Config = struct {
 func strConfig(key, defaultValue string) (ret string) {
 	if viper.IsSet(key) {
 		ret = viper.GetString(key)
+		return
 	}
 	logger.Infof("'%s' not configured, assuming: %s", key, defaultValue)
 	ret = defaultValue
@@ -65,6 +66,7 @@ func intConfig(key string, defaultValue, min uint) (ret uint, err error) {
 			err = fmt.Errorf("Invalid '%s' cofiguration: %v\n", key, ret)
 			return
 		}
+		return
 	}
 	logger.Infof("'%s' not configured, assuming: %s", key, defaultValue)
 	ret = defaultValue
