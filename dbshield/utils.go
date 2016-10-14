@@ -66,6 +66,7 @@ func initLogging() {
 		}
 	}
 	log.SetOutput(logger.Output)
+	logger.Level = config.Config.LogLevel
 }
 
 //maps database name to corresponding struct
