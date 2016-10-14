@@ -32,11 +32,11 @@ $ $GOPATH/bin/DBShield -f $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 
 ## Supported Databases:
 
-| Database      | Protect       | Data Masking  | TLS |
-| ------------- |:-------------:| -------------:| ---:|
-| **MariaDB**       | Yes           |      Yes      | Yes |
-| **MySQL**         | Yes           |      Yes      | Yes |
-| **Oracle**        | Yes           |      No       | Yes |
+| Database    | Protect | Data Masking | TLS |
+| ----------- |:-------:| ------------:| ---:|
+| **MariaDB** | Yes     |      Yes     | Yes |
+| **MySQL**   | Yes     |      Yes     | Yes |
+| **Oracle**  | Yes     |      No      | Yes |
 
 
 ## To Do
