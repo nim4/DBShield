@@ -18,7 +18,7 @@ threads: 5
 #Directory to save internal database
 dbDir: "/tmp/model/"
 #DBMS type
-dbms: mysql
+dbms: postgres
 #IP address to listen on
 listenIP: 0.0.0.0
 #Port number to listen on (0 means dbms default port ex. 3306 for mysql)
