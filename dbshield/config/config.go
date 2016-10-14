@@ -50,24 +50,29 @@ var Config = struct {
 }{}
 
 func strConfig(dst *string, key, defaultValue string) {
-	if viper.IsSet(k) {
-		dst = viper.GetString(k)
+	ret := ""
+	if viper.IsSet(key) {
+		ret = viper.GetString(key)
 	} else {
 		logger.Infof("'%s' not configured, assuming: %s", key, defaultValue)
-		dst = defaultValue
+		ret = defaultValue
 	}
+	dst = &ret
 }
 
-func intConfig(dst *int, key string, defaultValue, min int) error {
-	if viper.IsSet(k) {
-		dst = uint(viper.GetInt(k))
-		if dst < min {
-			return fmt.Errorf("Invalid '%s' cofiguration: %v\n", k, dst)
+func intConfig(dst *uint, key string, defaultValue, min uint) error {
+	var ret uint
+	if viper.IsSet(key) {
+		ret = uint(viper.GetInt(key))
+		if ret < min {
+			return fmt.Errorf("Invalid '%s' cofiguration: %v\n", key, ret)
 		}
 	} else {
 		logger.Infof("'%s' not configured, assuming: %s", key, defaultValue)
-		dst = defaultValue
+		ret = defaultValue
 	}
+	dst = &ret
+	return nil
 }
 
 //ParseConfig and return error if its not valid
@@ -86,7 +91,7 @@ func ParseConfig(configFile string) error {
 		case "learning":
 			Config.Learning = true
 		default:
-			return errors.New("Invalid 'mode' cofiguration:", viper.GetString("mode"))
+			return errors.New("Invalid 'mode' cofiguration: " + viper.GetString("mode"))
 		}
 	} else {
 		logger.Infof("'mode' not configured, assuming: learning")
@@ -101,7 +106,7 @@ func ParseConfig(configFile string) error {
 			case "source":
 				Config.CheckSource = true
 			default:
-				return errors.New("Invalid 'additionalChecks' cofiguration:", check)
+				return errors.New("Invalid 'additionalChecks' cofiguration: " + check)
 			}
 		}
 	}
@@ -114,7 +119,7 @@ func ParseConfig(configFile string) error {
 			case "pass": //Pass the query to server
 				Config.Action = nil
 			default:
-				return errors.New("Invalid 'action' cofiguration:", viper.GetString("action"))
+				return errors.New("Invalid 'action' cofiguration: " + viper.GetString("action"))
 			}
 		} else {
 			logger.Infof("'action' not configured, assuming: drop")
@@ -125,19 +130,19 @@ func ParseConfig(configFile string) error {
 	if viper.IsSet("targetIP") {
 		Config.TargetIP = viper.GetString("targetIP")
 	} else {
-		return errors.New("Invalid 'targetIP' cofiguration:", viper.GetString("targetIP"))
+		return errors.New("Invalid 'targetIP' cofiguration: " + viper.GetString("targetIP"))
 	}
 
 	if viper.IsSet("tlsPrivateKey") {
 		Config.TLSPrivateKey = viper.GetString("tlsPrivateKey")
 	} else {
-		return errors.New("Invalid 'tlsPrivateKey' cofiguration:", viper.GetString("tlsPrivateKey"))
+		return errors.New("Invalid 'tlsPrivateKey' cofiguration: " + viper.GetString("tlsPrivateKey"))
 	}
 
 	if viper.IsSet("tlsCertificate") {
 		Config.TargetIP = viper.GetString("tlsCertificate")
 	} else {
-		return errors.New("Invalid 'tlsCertificate' cofiguration:", viper.GetString("tlsCertificate"))
+		return errors.New("Invalid 'tlsCertificate' cofiguration: " + viper.GetString("tlsCertificate"))
 	}
 
 	//String values
@@ -161,12 +166,12 @@ func ParseConfig(configFile string) error {
 		return err
 	}
 
-	err = intConfig(&Config.ListenPort, "listenPort", 0, 1)
+	err = intConfig(&Config.ListenPort, "listenPort", 0, 0)
 	if err != nil {
 		return err
 	}
 
-	err = intConfig(&Config.TargetPort, "targetPort", 0, 1)
+	err = intConfig(&Config.TargetPort, "targetPort", 0, 0)
 	if err != nil {
 		return err
 	}

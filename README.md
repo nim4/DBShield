@@ -39,6 +39,5 @@ $ $GOPATH/bin/DBShield -f $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 | Oracle        | Yes           |      No       |
 
 ## To Do
- - Add Masking support for Oracle Database
  - Add Microsoft SQL Server
- - Add Postgres
+ - Add Masking support for Oracle Database

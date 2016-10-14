@@ -24,7 +24,7 @@ listenIP: 0.0.0.0
 #Port number to listen on (0 means dbms default port ex. 3306 for mysql)
 listenPort: 5000
 #IP address of the server
-targetIP: 192.168.1.164
+targetIP: 127.0.0.1
 #Port number of the dbms (0 means dbms default port ex. 3306 for mysql)
 targetPort: 0
 #TLS
