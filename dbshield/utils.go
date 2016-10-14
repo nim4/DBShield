@@ -15,6 +15,7 @@ import (
 	"github.com/nim4/DBShield/dbshield/utils"
 )
 
+//initial boltdb database
 func initModel() {
 	var err error
 	training.DBCon, err = bolt.Open(fmt.Sprintf("%s/%s_%s.db", config.Config.DBDir, config.Config.TargetIP, config.Config.DBType), 0600, nil)
@@ -67,12 +68,15 @@ func initLogging() {
 	log.SetOutput(logger.Output)
 }
 
+//maps database name to corresponding struct
 func dbNameToStruct(db string) (d utils.DBMS, err error) {
 	switch strings.ToLower(db) {
-	case "oracle":
-		d = &dbms.Oracle{}
 	case "mysql":
 		d = &dbms.MySQL{}
+	case "oracle":
+		d = &dbms.Oracle{}
+	case "postgres":
+		d = &dbms.Postgres{}
 	default:
 		err = fmt.Errorf("Unknown DBMS: %s", db)
 	}
