@@ -49,30 +49,26 @@ var Config = struct {
 	Masks map[string]mask
 }{}
 
-func strConfig(dst *string, key, defaultValue string) {
-	ret := ""
+func strConfig(key, defaultValue string) (ret string) {
 	if viper.IsSet(key) {
 		ret = viper.GetString(key)
-	} else {
-		logger.Infof("'%s' not configured, assuming: %s", key, defaultValue)
-		ret = defaultValue
 	}
-	dst = &ret
+	logger.Infof("'%s' not configured, assuming: %s", key, defaultValue)
+	ret = defaultValue
+	return
 }
 
-func intConfig(dst *uint, key string, defaultValue, min uint) error {
-	var ret uint
+func intConfig(key string, defaultValue, min uint) (ret uint, err error) {
 	if viper.IsSet(key) {
 		ret = uint(viper.GetInt(key))
 		if ret < min {
-			return fmt.Errorf("Invalid '%s' cofiguration: %v\n", key, ret)
+			err = fmt.Errorf("Invalid '%s' cofiguration: %v\n", key, ret)
+			return
 		}
-	} else {
-		logger.Infof("'%s' not configured, assuming: %s", key, defaultValue)
-		ret = defaultValue
 	}
-	dst = &ret
-	return nil
+	logger.Infof("'%s' not configured, assuming: %s", key, defaultValue)
+	ret = defaultValue
+	return
 }
 
 //ParseConfig and return error if its not valid
@@ -140,38 +136,38 @@ func ParseConfig(configFile string) error {
 	}
 
 	if viper.IsSet("tlsCertificate") {
-		Config.TargetIP = viper.GetString("tlsCertificate")
+		Config.TLSCertificate = viper.GetString("tlsCertificate")
 	} else {
 		return errors.New("Invalid 'tlsCertificate' cofiguration: " + viper.GetString("tlsCertificate"))
 	}
 
 	//String values
-	strConfig(&Config.DBDir, "dbDir", os.TempDir()+"/model")
-	os.Mkdir(Config.DBDir, 0740) //Make dbDir, just in case its not there
+	Config.DBDir = strConfig("dbDir", os.TempDir()+"/model")
+	os.MkdirAll(Config.DBDir, 0740) //Make dbDir, just in case its not there
 
-	strConfig(&Config.DBType, "dbms", "mysql")
+	Config.DBType = strConfig("dbms", "mysql")
 
-	strConfig(&Config.ListenIP, "listenIP", "0.0.0.0")
+	Config.ListenIP = strConfig("listenIP", "0.0.0.0")
 
-	strConfig(&Config.LogPath, "logPath", "stderr")
+	Config.LogPath = strConfig("logPath", "stderr")
 
 	//Integer values
-	err = intConfig(&Config.Threads, "threads", 4, 1)
+	Config.Threads, err = intConfig("threads", 4, 1)
 	if err != nil {
 		return err
 	}
 
-	err = intConfig(&Config.LogLevel, "logLevel", 2, 0)
+	Config.LogLevel, err = intConfig("logLevel", 2, 0)
 	if err != nil {
 		return err
 	}
 
-	err = intConfig(&Config.ListenPort, "listenPort", 0, 0)
+	Config.ListenPort, err = intConfig("listenPort", 0, 0)
 	if err != nil {
 		return err
 	}
 
-	err = intConfig(&Config.TargetPort, "targetPort", 0, 0)
+	Config.TargetPort, err = intConfig("targetPort", 0, 0)
 	if err != nil {
 		return err
 	}
