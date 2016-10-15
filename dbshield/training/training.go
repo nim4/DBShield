@@ -65,30 +65,37 @@ func CheckQuery(context sql.QueryContext) bool {
 			if err := json.Unmarshal(v, &contextArray); err != nil {
 				return err
 			}
-			if config.Config.CheckUser || config.Config.CheckSource {
+
+			if config.Config.CheckUser {
 				validUser := false
-				validAddr := false
 				for _, con := range contextArray {
-					if config.Config.CheckUser && con.User == context.User {
+					if con.User == context.User {
 						validUser = true
-					}
-					if config.Config.CheckSource && con.Client == context.Client {
-						validAddr = true
-					}
-					if validUser && validAddr {
-						return nil
+						break
 					}
 				}
 				if !validUser {
 					return fmt.Errorf("User '%v' is not valid for this query", context.User)
 				}
-				return fmt.Errorf("Client '%v' is not valid for this query", context.Client)
+			}
+
+			if config.Config.CheckSource {
+				validAddr := false
+				for _, con := range contextArray {
+					if con.Client == context.Client {
+						validAddr = true
+						break
+					}
+					if !validAddr {
+						return fmt.Errorf("Client '%v' is not valid for this query", context.Client)
+					}
+				}
 			}
 			return nil
 		}
-		return fmt.Errorf("Pattern not found: %v", pattern)
+		return fmt.Errorf("Pattern not found: %v (%s)", pattern, context.Query)
 	}); err != nil {
-		logger.Warning(err, "("+context.Query+")")
+		logger.Warning(err)
 		return false
 	}
 	return true
