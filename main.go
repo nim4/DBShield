@@ -35,7 +35,7 @@ func main() {
 	}
 
 	if *checkConfig {
-		if err := dbshield.Parse(*config); err != nil {
+		if err := dbshield.Check(*config); err != nil {
 			log.Println(err)
 		}
 		return
