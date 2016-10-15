@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -20,7 +19,8 @@ type mask struct {
 	PaddingCharacter []byte
 }
 
-type configStruct struct {
+//Config holds current configurations
+var Config struct {
 	Learning    bool
 	CheckUser   bool
 	CheckSource bool
@@ -29,7 +29,7 @@ type configStruct struct {
 	LogPath  string
 
 	DBType string
-	DB     utils.DBMS
+	DB     utils.DBMS `json:"-"`
 
 	Threads uint
 	DBDir   string
@@ -43,28 +43,11 @@ type configStruct struct {
 	TLSPrivateKey  string
 	TLSCertificate string
 
-	Action func(net.Conn) error `json:"-"`
+	Action     string
+	ActionFunc func(net.Conn) error `json:"-"`
 
 	//Key-> database.table.column
 	//Masks map[string]mask
-}
-
-//Config hold parsed configurations
-var Config configStruct
-
-//JSON form of the configurations
-func (c configStruct) JSON() ([]byte, error) {
-	action := "drop"
-	if c.Action == nil {
-		action = "pass"
-	}
-	return json.MarshalIndent(struct {
-		Action string
-		configStruct
-	}{
-		Action:       action,
-		configStruct: c,
-	}, "", "    ")
 }
 
 func strConfig(key, defaultValue string) (ret string) {
@@ -129,17 +112,18 @@ func ParseConfig(configFile string) error {
 
 	if !Config.Learning {
 		if viper.IsSet("action") {
-			switch viper.GetString("action") {
+			Config.Action = viper.GetString("action")
+			switch Config.Action {
 			case "drop": //Close the connection
-				Config.Action = utils.ActionDrop
+				Config.ActionFunc = utils.ActionDrop
 			case "pass": //Pass the query to server
-				Config.Action = nil
+				Config.ActionFunc = nil
 			default:
-				return errors.New("Invalid 'action' cofiguration: " + viper.GetString("action"))
+				return errors.New("Invalid 'action' cofiguration: " + Config.Action)
 			}
 		} else {
 			logger.Infof("'action' not configured, assuming: drop")
-			Config.Action = utils.ActionDrop
+			Config.ActionFunc = utils.ActionDrop
 		}
 	}
 

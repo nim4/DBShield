@@ -82,8 +82,8 @@ func (m *MySQL) Handler() error {
 			if config.Config.Learning {
 				go training.AddToTrainingSet(context)
 			} else {
-				if config.Config.Action != nil && !training.CheckQuery(context) {
-					return config.Config.Action(m.client)
+				if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
+					return config.Config.ActionFunc(m.client)
 				}
 			}
 		case 0x04: //Show fields
