@@ -24,7 +24,7 @@ func TestRemoteAddrToIP(t *testing.T) {
 }
 
 func TestThreeByteBigEndianToInt(t *testing.T) {
-	res := threeByteBigEndianToInt([]byte{3, 2, 1})
+	res := threeByteBigEndianToInt([]byte{1, 2, 3})
 	if res != 197121 {
 		t.Error("Expected 197121, got ", res)
 	}
