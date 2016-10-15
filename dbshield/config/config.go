@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -19,8 +20,7 @@ type mask struct {
 	PaddingCharacter []byte
 }
 
-//Config hold parsed configurations
-var Config = struct {
+type configStruct struct {
 	Learning    bool
 	CheckUser   bool
 	CheckSource bool
@@ -43,11 +43,29 @@ var Config = struct {
 	TLSPrivateKey  string
 	TLSCertificate string
 
-	Action func(net.Conn) error
+	Action func(net.Conn) error `json:"-"`
 
 	//Key-> database.table.column
 	//Masks map[string]mask
-}{}
+}
+
+//Config hold parsed configurations
+var Config configStruct
+
+//JSON form of the configurations
+func (c configStruct) JSON() ([]byte, error) {
+	action := "drop"
+	if c.Action == nil {
+		action = "pass"
+	}
+	return json.MarshalIndent(struct {
+		Action string
+		configStruct
+	}{
+		Action:       action,
+		configStruct: c,
+	}, "", "    ")
+}
 
 func strConfig(key, defaultValue string) (ret string) {
 	if viper.IsSet(key) {
