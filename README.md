@@ -2,6 +2,7 @@
 
 Protects your data by inspecting incoming queries from your application server and rejecting abnormal ones.
 
+
 ## How it works?
 
 For example, this is how web server normally interacts with database server:
@@ -20,7 +21,7 @@ After collecting enough patterns we can run DBShield in protect mode. Protect mo
 ## Installation
 
 ```
-$ go get github.com/nim4/DBShield
+$ go get -u github.com/nim4/DBShield
 ```
 
 then you can execute it like:
@@ -28,18 +29,22 @@ then you can execute it like:
 $ $GOPATH/bin/DBShield -f $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 ```
 
+## Supports:
 
-## Supported Databases:
-
-| Database     | Protect | TLS |
+| Database     | Protect | SSL |
 |:------------:|:-------:|:---:|
-| **MariaDB**  | Yes     | Yes |
-| **MySQL**    | Yes     | Yes |
-| **Oracle**   | Yes     | No  |
-| **Postgres** | Yes     | Yes |
+| **MariaDB**  | ![Yes](https://cdn.rawgit.com/nim4/DBShield/master/misc/yes.png) | ![Yes](https://cdn.rawgit.com/nim4/DBShield/master/misc/yes.png) |
+| **MySQL**    | ![Yes](https://cdn.rawgit.com/nim4/DBShield/master/misc/yes.png) | ![Yes](https://cdn.rawgit.com/nim4/DBShield/master/misc/yes.png) |
+| **Oracle**   | ![Yes](https://cdn.rawgit.com/nim4/DBShield/master/misc/yes.png) | ![No](https://cdn.rawgit.com/nim4/DBShield/master/misc/no.png)  |
+| **Postgres** | ![Yes](https://cdn.rawgit.com/nim4/DBShield/master/misc/yes.png) | ![Yes](https://cdn.rawgit.com/nim4/DBShield/master/misc/yes.png) |
 
+## More
+- [Sample configuration  file](https://github.com/nim4/DBShield/blob/master/conf/dbshield.yml)
+- [GoDoc](https://godoc.org/github.com/nim4/DBShield/dbshield)
 
 ## To Do
+
  - Add Microsoft SQL Server
  - Add "exec" action
  - Add more command-line arguments
+ - Improve documentation
