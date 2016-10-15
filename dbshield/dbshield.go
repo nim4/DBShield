@@ -14,8 +14,8 @@ import (
 //Version of the library
 var Version = "1.0-beta"
 
-//Parse config file and writes it to STDUT
-func Parse(configFile string) error {
+//Check config file and writes it to STDUT
+func Check(configFile string) error {
 	err := config.ParseConfig(configFile)
 	if err != nil {
 		return err
