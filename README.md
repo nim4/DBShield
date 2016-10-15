@@ -18,6 +18,27 @@ After collecting enough patterns we can run DBShield in protect mode. Protect mo
 
 ![Protect mode](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_03.png)
 
+**Sample Output:**
+
+```
+$ go run main.go
+2016/10/15 16:25:31 [INFO]  Config file: /etc/dbshield.yml
+2016/10/15 16:25:31 [INFO]  Internal DB: /tmp/model/127.0.0.1_postgres.db
+2016/10/15 16:25:31 [INFO]  Listening: 0.0.0.0:5000 (Threads: 5)
+2016/10/15 16:25:31 [INFO]  Backend: postgres (127.0.0.1:5432)
+2016/10/15 16:25:31 [INFO]  Protect: true
+2016/10/15 16:25:33 [INFO]  Connected from: 127.0.0.1:35910
+2016/10/15 16:25:33 [INFO]  Connected to: 127.0.0.1:5432
+2016/10/15 16:25:33 [INFO]  SSL connection
+2016/10/15 16:25:34 [DEBUG] Client handshake done
+2016/10/15 16:25:34 [DEBUG] Server handshake done
+2016/10/15 16:25:34 [INFO]  User: postgres
+2016/10/15 16:25:34 [INFO]  Database: test
+2016/10/15 16:25:34 [INFO]  Query: SELECT * FROM stocks where id=-1 or 1=1
+2016/10/15 16:25:34 [WARN]  Pattern not found: [53 55 51 52 55 52 50 53 55 51 53 49 115 116 111 99 107 115 53 55 51 53 50 105 100 54 49 52 53 53 55 51 55 57 53 55 52 48 52 53 55 51 55 57 54 49 53 55 51 55 57] (SELECT * FROM stocks where id=-1 or 1=1)
+2016/10/15 16:25:34 [WARN]  Dropping connection
+```
+
 ## Installation
 
 ```
