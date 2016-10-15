@@ -1,6 +1,7 @@
 package dbshield
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 
@@ -8,6 +9,23 @@ import (
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/utils"
 )
+
+//Version of the library
+var Version = "1.0-beta"
+
+//Parse config file and writes it to STDUT
+func Parse(configFile string) error {
+	err := config.ParseConfig(configFile)
+	if err != nil {
+		return err
+	}
+	confJSON, err := config.Config.JSON()
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(confJSON))
+	return nil
+}
 
 //Start the proxy
 func Start(configFile string) (err error) {

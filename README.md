@@ -47,7 +47,7 @@ $ go get -u github.com/nim4/DBShield
 
 then you can execute it like:
 ```
-$ $GOPATH/bin/DBShield -f $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
+$ $GOPATH/bin/DBShield -c $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 ```
 
 ## Supports:
@@ -66,6 +66,5 @@ $ $GOPATH/bin/DBShield -f $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 ## To Do
 
  - Add Microsoft SQL Server
- - Add "exec" action
  - Add more command-line arguments
  - Improve documentation
