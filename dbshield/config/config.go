@@ -46,7 +46,7 @@ var Config = struct {
 	Action func(net.Conn) error
 
 	//Key-> database.table.column
-	Masks map[string]mask
+	//Masks map[string]mask
 }{}
 
 func strConfig(key, defaultValue string) (ret string) {
@@ -173,7 +173,7 @@ func ParseConfig(configFile string) error {
 	if err != nil {
 		return err
 	}
-
+	/* Masking
 	Config.Masks = make(map[string]mask)
 	if viper.IsSet("masks") {
 		tmpMasks := viper.Get("masks").([]interface{})
@@ -188,5 +188,6 @@ func ParseConfig(configFile string) error {
 			}
 		}
 	}
+	*/
 	return nil
 }

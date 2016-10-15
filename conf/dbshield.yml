@@ -6,7 +6,7 @@
 #possible values:
 #       learning (add queries to training set)
 #       protect (take action against abnormal queries)
-mode: learning
+mode: protect
 
 
 #############################
@@ -18,7 +18,7 @@ threads: 5
 #Directory to save internal database
 dbDir: "/tmp/model/"
 #DBMS type
-dbms: mysql
+dbms: postgres
 #IP address to listen on
 listenIP: 0.0.0.0
 #Port number to listen on (0 means dbms default port ex. 3306 for mysql)
@@ -70,22 +70,3 @@ logLevel: 2
 #       stdout
 #       stderr
 logPath: stdout
-
-
-#############################
-### Masking               ###
-#############################
-#mask list
-masks:
-- database: test    #database name
-  table: Persons    #table name
-  column: City      #column name
-  matchRegEx: .
-  replaceRegEx: X
-  paddingCharacter: p
-- database: test
-  table: Persons
-  column: Name
-  matchRegEx: (.{2}).+
-  replaceRegEx: $1
-  paddingCharacter: X

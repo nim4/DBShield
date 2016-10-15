@@ -62,7 +62,6 @@ func (m *MySQL) Handler() error {
 		if err != nil {
 			return err
 		}
-		queryRequest := false
 		data := buf[4:]
 
 		switch data[0] {
@@ -72,7 +71,6 @@ func (m *MySQL) Handler() error {
 			m.currentDB = string(data[1:])
 			logger.Infof("Using database: %v", m.currentDB)
 		case 0x03: //Query
-			queryRequest = true
 			query := data[1:]
 			logger.Infof("Query: %s", query)
 			context := sql.QueryContext{
@@ -104,7 +102,7 @@ func (m *MySQL) Handler() error {
 		if err != nil {
 			return err
 		}
-
+		/* Masking
 		if queryRequest && buf[0] == 0x1 {
 			orginalColumns := []string{}
 			var db, orginalTable string
@@ -199,7 +197,7 @@ func (m *MySQL) Handler() error {
 				}
 			}
 		}
-
+		*/
 		_, err = m.client.Write(buf)
 		if err != nil {
 			return err

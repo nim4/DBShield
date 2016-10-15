@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 
 	"github.com/boltdb/bolt"
@@ -18,7 +19,9 @@ import (
 //initial boltdb database
 func initModel() {
 	var err error
-	training.DBCon, err = bolt.Open(fmt.Sprintf("%s/%s_%s.db", config.Config.DBDir, config.Config.TargetIP, config.Config.DBType), 0600, nil)
+	path := path.Join(config.Config.DBDir, config.Config.TargetIP+"_"+config.Config.DBType+".db")
+	logger.Infof("Internal DB: %s", path)
+	training.DBCon, err = bolt.Open(path, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
