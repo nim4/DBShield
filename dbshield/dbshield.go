@@ -28,6 +28,8 @@ func Start(configFile string) (err error) {
 	}
 
 	initLogging()
+	logger.Infof("Config file: %s", configFile)
+
 	initModel()
 	initSignal()
 
@@ -46,14 +48,16 @@ func Start(configFile string) (err error) {
 		return
 	}
 
-	logger.Infof("Service: %s", config.Config.DBType)
-	logger.Infof("Listening: %s:%v",
+	logger.Infof("Listening: %s:%v (Threads: %v)",
 		config.Config.ListenIP,
-		config.Config.ListenPort)
-	logger.Infof("Target: %s:%v",
+		config.Config.ListenPort,
+		config.Config.Threads)
+	logger.Infof("Backend: %s (%s:%v)",
+		config.Config.DBType,
 		config.Config.TargetIP,
 		config.Config.TargetPort)
-	logger.Infof("Threads: %v", config.Config.Threads)
+
+	logger.Infof("Protect: %v", !config.Config.Learning)
 	tasks := make(chan utils.DBMS, 100)
 	results := make(chan error, 100)
 
