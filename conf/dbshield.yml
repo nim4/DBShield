@@ -6,7 +6,7 @@
 #possible values:
 #       learning (add queries to training set)
 #       protect (take action against abnormal queries)
-mode: protect
+mode: learning
 
 
 #############################

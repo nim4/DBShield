@@ -32,13 +32,15 @@ $ $GOPATH/bin/DBShield -f $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 
 ## Supported Databases:
 
-| Database    | Protect | TLS |
-| ----------- |:-------:| ---:|
-| **MariaDB** | Yes     | Yes |
-| **MySQL**   | Yes     | Yes |
-| **Oracle**  | Yes     | Yes |
+| Database     | Protect | TLS |
+|:------------:|:-------:|:---:|
+| **MariaDB**  | Yes     | Yes |
+| **MySQL**    | Yes     | Yes |
+| **Oracle**   | Yes     | Yes |
+| **Postgres** | Yes     | Yes |
 
 
 ## To Do
- - Add Postgres
  - Add Microsoft SQL Server
+ - Add "exec" action
+ - Add more command-line arguments
