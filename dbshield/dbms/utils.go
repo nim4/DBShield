@@ -1,10 +1,7 @@
 package dbms
 
 import (
-	"bytes"
 	"net"
-
-	"github.com/nim4/DBShield/dbshield/config"
 
 	"github.com/nim4/DBShield/dbshield/logger"
 )
@@ -29,6 +26,7 @@ func threeByteBigEndianToInt(data []byte) uint {
 	return uint(data[2])*65536 + uint(data[1])*256 + uint(data[0])
 }
 
+/* Masking
 func getMask(key string, data []byte) ([]byte, bool) {
 	if mask, ok := config.Config.Masks[key]; ok {
 		initLen := len(data)
@@ -41,3 +39,4 @@ func getMask(key string, data []byte) ([]byte, bool) {
 	}
 	return nil, false
 }
+*/

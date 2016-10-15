@@ -49,7 +49,6 @@ func (o *Oracle) Handler() error {
 	defer handlePanic()
 
 	for {
-		//var buf []byte
 		buf, eof, err := o.readPacket(o.client)
 		if err != nil {
 			return err
@@ -93,7 +92,6 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 
 	switch buf[4] { //Packet Type
 	case 0x01: //Connect
-		//logger.Debug("Connect")
 		connectDataLen := int(buf[24])*256 + int(buf[25])
 		connectData := buf[len(buf)-connectDataLen:]
 
@@ -107,7 +105,6 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 	case 0x02: //Accept
 		//logger.Debug("Accept")
 	case 0x06: //Data
-		//logger.Debug("Data")
 		data := buf[8:]
 		if data[1] == 0x40 {
 			eof = true
@@ -145,6 +142,7 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 				logger.Infof("Username: %s", o.username)
 			}
 		case 0x10:
+			/* Masking
 			switch payload[1] {
 			case 0x17: // Reading query response
 				payload = payload[72:]
@@ -157,8 +155,8 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 					pos += n + 50
 					logger.Debugf("Column: %s", column)
 				}
-				//TODO add masking support (find a way get parse values)
 			}
+			*/
 		}
 	case 0x0b: //Resend
 		//logger.Debug("Resend")
