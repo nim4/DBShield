@@ -29,14 +29,13 @@ $ $GOPATH/bin/DBShield -f $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 ```
 
 
-
 ## Supported Databases:
 
 | Database     | Protect | TLS |
 |:------------:|:-------:|:---:|
 | **MariaDB**  | Yes     | Yes |
 | **MySQL**    | Yes     | Yes |
-| **Oracle**   | Yes     | Yes |
+| **Oracle**   | Yes     | No  |
 | **Postgres** | Yes     | Yes |
 
 
