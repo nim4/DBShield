@@ -2,7 +2,7 @@ package dbshield
 
 import "testing"
 
-func TestpascalString(t *testing.T) {
+func TestDbNameToStruct(t *testing.T) {
 	_, err := dbNameToStruct("mysql")
 	if err != nil {
 		t.Error("Expected struct, got ", err)
