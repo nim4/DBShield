@@ -1,6 +1,11 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/nim4/DBShield)](https://goreportcard.com/badge/github.com/nim4/DBShield)
+[![Dev chat](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/DBShield/Lobby)
+[![GoDoc](https://godoc.org/github.com/nim4/DBShield?status.svg)](https://godoc.org/github.com/nim4/DBShield)
+
 # DBShield
 
 Protects your data by inspecting incoming queries from your application server and rejecting abnormal ones.
+
 
 
 ## How it works?
@@ -61,7 +66,6 @@ $ $GOPATH/bin/DBShield -c $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 
 ## More
 - [Sample configuration  file](https://github.com/nim4/DBShield/blob/master/conf/dbshield.yml)
-- [GoDoc](https://godoc.org/github.com/nim4/DBShield/dbshield)
 
 ## To Do
 
