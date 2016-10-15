@@ -50,7 +50,16 @@ var Config struct {
 	//Masks map[string]mask
 }
 
-func strConfig(key, defaultValue string) (ret string) {
+func strConfig(key string) (ret string, err error) {
+	if viper.IsSet(key) {
+		ret = viper.GetString(key)
+		return
+	}
+	err = fmt.Errorf("Invalid '%s' cofiguration", key)
+	return
+}
+
+func strConfigDefualt(key, defaultValue string) (ret string) {
 	if viper.IsSet(key) {
 		ret = viper.GetString(key)
 		return
@@ -127,33 +136,30 @@ func ParseConfig(configFile string) error {
 		}
 	}
 
-	if viper.IsSet("targetIP") {
-		Config.TargetIP = viper.GetString("targetIP")
-	} else {
-		return errors.New("Invalid 'targetIP' cofiguration: " + viper.GetString("targetIP"))
+	Config.TargetIP, err = strConfig("targetIP")
+	if err != nil {
+		return err
 	}
 
-	if viper.IsSet("tlsPrivateKey") {
-		Config.TLSPrivateKey = viper.GetString("tlsPrivateKey")
-	} else {
-		return errors.New("Invalid 'tlsPrivateKey' cofiguration: " + viper.GetString("tlsPrivateKey"))
+	Config.TLSPrivateKey, err = strConfig("tlsPrivateKey")
+	if err != nil {
+		return err
 	}
 
-	if viper.IsSet("tlsCertificate") {
-		Config.TLSCertificate = viper.GetString("tlsCertificate")
-	} else {
-		return errors.New("Invalid 'tlsCertificate' cofiguration: " + viper.GetString("tlsCertificate"))
+	Config.TLSCertificate, err = strConfig("tlsCertificate")
+	if err != nil {
+		return err
 	}
 
 	//String values
-	Config.DBDir = strConfig("dbDir", os.TempDir()+"/model")
+	Config.DBDir = strConfigDefualt("dbDir", os.TempDir()+"/model")
 	os.MkdirAll(Config.DBDir, 0740) //Make dbDir, just in case its not there
 
-	Config.DBType = strConfig("dbms", "mysql")
+	Config.DBType = strConfigDefualt("dbms", "mysql")
 
-	Config.ListenIP = strConfig("listenIP", "0.0.0.0")
+	Config.ListenIP = strConfigDefualt("listenIP", "0.0.0.0")
 
-	Config.LogPath = strConfig("logPath", "stderr")
+	Config.LogPath = strConfigDefualt("logPath", "stderr")
 
 	//Integer values
 	Config.Threads, err = intConfig("threads", 4, 1)
