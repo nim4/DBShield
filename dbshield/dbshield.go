@@ -1,6 +1,7 @@
 package dbshield
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
@@ -19,7 +20,7 @@ func Parse(configFile string) error {
 	if err != nil {
 		return err
 	}
-	confJSON, err := config.Config.JSON()
+	confJSON, err := json.MarshalIndent(config.Config, "", "    ")
 	if err != nil {
 		return err
 	}

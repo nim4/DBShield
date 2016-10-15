@@ -131,8 +131,8 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 				if config.Config.Learning {
 					go training.AddToTrainingSet(context)
 				} else {
-					if config.Config.Action != nil && !training.CheckQuery(context) {
-						err = config.Config.Action(o.client)
+					if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
+						err = config.Config.ActionFunc(o.client)
 						return
 					}
 				}

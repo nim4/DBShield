@@ -78,8 +78,8 @@ func (p *Postgres) Handler() (err error) {
 			if config.Config.Learning {
 				go training.AddToTrainingSet(context)
 			} else {
-				if config.Config.Action != nil && !training.CheckQuery(context) {
-					return config.Config.Action(p.client)
+				if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
+					return config.Config.ActionFunc(p.client)
 				}
 			}
 
