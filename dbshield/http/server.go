@@ -23,17 +23,22 @@ func Serve() {
 	http.Handle("/js/", http.FileServer(http.Dir("assets")))
 	http.Handle("/css/", http.FileServer(http.Dir("assets")))
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "assets/index.htm")
-	})
-	http.HandleFunc("/report.htm", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "assets/report.htm")
-	})
+	http.HandleFunc("/", mainHandler)
+	http.HandleFunc("/report.htm", mainHandler)
 	http.HandleFunc("/api", apiHandler)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	logger.Infof("Web interface on https://%s/", config.Config.HTTPAddr)
 	http.ListenAndServeTLS(config.Config.HTTPAddr, config.Config.TLSCertificate, config.Config.TLSPrivateKey, nil)
+}
+
+//mainHandler for html
+func mainHandler(w http.ResponseWriter, r *http.Request) {
+	if checkLogin(r) {
+		http.ServeFile(w, r, "assets/report.htm")
+		return
+	}
+	http.ServeFile(w, r, "assets/index.htm")
 }
 
 //apiHandler returns state

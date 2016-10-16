@@ -101,13 +101,16 @@ function addDataPoint() {
 }
 
 //Get Value from Api
-function loadDoc() {
-
+function ajax(init) {
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       yValuesOld = yValues;
       yValues = JSON.parse(this.responseText);
+      if (init) {
+        // To filter the first request
+        yValuesOld = yValues;
+      }
     }
   };
   xhttp.open("GET", '/api?_=' + new Date().getTime(), true);
@@ -116,5 +119,7 @@ function loadDoc() {
 
 renderStep();
 addDataPoint();
-loadDoc();
-setInterval(loadDoc, 1000);
+ajax(true);
+setInterval(function() {
+  ajax(false)
+}, 1000);
