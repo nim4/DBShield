@@ -1,9 +1,12 @@
 package training
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/nim4/DBShield/dbshield/config"
@@ -96,6 +99,24 @@ func CheckQuery(context sql.QueryContext) bool {
 		return fmt.Errorf("Pattern not found: %v (%s)", pattern, context.Query)
 	}); err != nil {
 		logger.Warning(err)
+		//Record abnormal
+		if err = DBCon.Update(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte("abnormal"))
+			if b == nil {
+				panic(errors.New("Bucket not found"))
+			}
+			key := new(bytes.Buffer)
+			er := binary.Write(key, binary.LittleEndian, time.Now().UnixNano())
+			if err != nil {
+				return er
+			}
+			if er = b.Put(key.Bytes(), pattern); err != nil {
+				return er
+			}
+			return nil
+		}); err != nil {
+			logger.Warning(err)
+		}
 		return false
 	}
 	return true
