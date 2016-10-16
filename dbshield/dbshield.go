@@ -1,3 +1,6 @@
+/*
+Package dbshield implements the database firewall functionality
+*/
 package dbshield
 
 import (

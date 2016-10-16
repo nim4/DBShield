@@ -77,7 +77,7 @@ func (m *MySQL) Handler() error {
 				Query:  string(query),
 				User:   m.username,
 				Client: remoteAddrToIP(m.client.RemoteAddr()),
-				Time:   time.Now(),
+				Time:   time.Now().Unix(),
 			}
 			if config.Config.Learning {
 				go training.AddToTrainingSet(context)
