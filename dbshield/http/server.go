@@ -4,26 +4,43 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/gorilla/securecookie"
+	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/sql"
 	"github.com/nim4/DBShield/dbshield/training"
 )
 
-//Serve HTTP on given address
-func Serve(addr string) {
-	fs := http.FileServer(http.Dir("assets"))
-	http.Handle("/", http.StripPrefix("/", fs))
+var cookieHandler = securecookie.New(
+	securecookie.GenerateRandomKey(64),
+	securecookie.GenerateRandomKey(32))
 
-	http.HandleFunc("/api/", handle)
+//Serve HTTPS
+func Serve() {
+	http.Handle("/js/", http.FileServer(http.Dir("assets")))
+	http.Handle("/css/", http.FileServer(http.Dir("assets")))
 
-	logger.Infof("HTTP server on %s", addr)
-	http.ListenAndServe(addr, nil)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "assets/index.htm")
+	})
+	http.HandleFunc("/report.htm", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "assets/report.htm")
+	})
+	http.HandleFunc("/api", apiHandler)
+	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/logout", logoutHandler)
+	logger.Infof("Web interface on https://%s/", config.Config.HTTPAddr)
+	http.ListenAndServeTLS(config.Config.HTTPAddr, config.Config.TLSCertificate, config.Config.TLSPrivateKey, nil)
 }
 
-//handle api count
-func handle(w http.ResponseWriter, r *http.Request) {
+//apiHandler returns state
+func apiHandler(w http.ResponseWriter, r *http.Request) {
+	if !checkLogin(r) {
+		return
+	}
 	abnormal := 0
 	total := 0
 
@@ -65,4 +82,58 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		abnormal,
 	})
 	w.Write(out)
+}
+
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	pass := r.FormValue("password")
+	redirectTarget := "/"
+	if pass == config.Config.HTTPPassword {
+		setSession(w)
+		redirectTarget = "/report.htm"
+	}
+	http.Redirect(w, r, redirectTarget, 302)
+}
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		clearSession(w)
+		http.Redirect(w, r, "/", 302)
+	}
+}
+
+func checkLogin(r *http.Request) bool {
+	if cookie, err := r.Cookie("session"); err == nil {
+		cookieValue := make(map[string]string)
+		if err = cookieHandler.Decode("session", cookie.Value, &cookieValue); err == nil {
+			check := cookieValue["Login"]
+			return check != ""
+		}
+	}
+	return false
+}
+
+func setSession(w http.ResponseWriter) {
+	value := map[string]string{
+		"Login": time.Now().String(),
+	}
+	if encoded, err := cookieHandler.Encode("session", value); err == nil {
+		cookie := &http.Cookie{
+			Name:     "session",
+			Value:    encoded,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+		}
+		http.SetCookie(w, cookie)
+	}
+}
+
+func clearSession(w http.ResponseWriter) {
+	cookie := &http.Cookie{
+		Name:   "session",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	}
+	http.SetCookie(w, cookie)
 }

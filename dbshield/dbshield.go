@@ -82,7 +82,7 @@ func Start(configFile string) (err error) {
 	logger.Infof("Protect: %v", !config.Config.Learning)
 
 	if config.Config.HTTP {
-		go http.Serve(config.Config.HTTPAddr)
+		go http.Serve()
 	}
 
 	tasks := make(chan utils.DBMS, 100)

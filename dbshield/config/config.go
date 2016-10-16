@@ -43,8 +43,9 @@ var Config struct {
 	TLSPrivateKey  string
 	TLSCertificate string
 
-	HTTP     bool
-	HTTPAddr string
+	HTTP         bool
+	HTTPAddr     string
+	HTTPPassword string
 
 	Action     string
 	ActionFunc func(net.Conn) error `json:"-"`
@@ -86,15 +87,7 @@ func intConfig(key string, defaultValue, min uint) (ret uint, err error) {
 	return
 }
 
-//ParseConfig and return error if its not valid
-func ParseConfig(configFile string) error {
-	viper.SetConfigFile(configFile)
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
-		return fmt.Errorf("Fatal error - config file: %s \n", err)
-	}
-
-	//set default values
+func configGeneral() error {
 	if viper.IsSet("mode") {
 		switch viper.GetString("mode") {
 		case "protect":
@@ -108,20 +101,49 @@ func ParseConfig(configFile string) error {
 		logger.Infof("'mode' not configured, assuming: learning")
 		Config.Learning = true
 	}
+	var err error
 
-	if viper.IsSet("additionalChecks") {
-		for _, check := range strings.Split(viper.GetString("additionalChecks"), ",") {
-			switch check {
-			case "user":
-				Config.CheckUser = true
-			case "source":
-				Config.CheckSource = true
-			default:
-				return errors.New("Invalid 'additionalChecks' cofiguration: " + check)
-			}
-		}
+	Config.Threads, err = intConfig("threads", 4, 1)
+	if err != nil {
+		return err
 	}
 
+	Config.ListenPort, err = intConfig("listenPort", 0, 0)
+	if err != nil {
+		return err
+	}
+
+	Config.TargetPort, err = intConfig("targetPort", 0, 0)
+	if err != nil {
+		return err
+	}
+	Config.TargetIP, err = strConfig("targetIP")
+	if err != nil {
+		return err
+	}
+
+	//String values
+	Config.TLSPrivateKey, err = strConfig("tlsPrivateKey")
+	if err != nil {
+		return err
+	}
+
+	Config.TLSCertificate, err = strConfig("tlsCertificate")
+	if err != nil {
+		return err
+	}
+
+	Config.DBDir = strConfigDefualt("dbDir", os.TempDir()+"/model")
+	os.MkdirAll(Config.DBDir, 0740) //Make dbDir, just in case its not there
+
+	Config.DBType = strConfigDefualt("dbms", "mysql")
+
+	Config.ListenIP = strConfigDefualt("listenIP", "0.0.0.0")
+
+	return nil
+}
+
+func configProtect() error {
 	if !Config.Learning {
 		if viper.IsSet("action") {
 			Config.Action = viper.GetString("action")
@@ -137,61 +159,70 @@ func ParseConfig(configFile string) error {
 			logger.Infof("'action' not configured, assuming: drop")
 			Config.ActionFunc = utils.ActionDrop
 		}
+
+		if viper.IsSet("additionalChecks") {
+			for _, check := range strings.Split(viper.GetString("additionalChecks"), ",") {
+				switch check {
+				case "user":
+					Config.CheckUser = true
+				case "source":
+					Config.CheckSource = true
+				default:
+					return errors.New("Invalid 'additionalChecks' cofiguration: " + check)
+				}
+			}
+		}
 	}
+	return nil
+}
 
-	Config.TargetIP, err = strConfig("targetIP")
-	if err != nil {
-		return err
-	}
-
-	Config.TLSPrivateKey, err = strConfig("tlsPrivateKey")
-	if err != nil {
-		return err
-	}
-
-	Config.TLSCertificate, err = strConfig("tlsCertificate")
-	if err != nil {
-		return err
-	}
-
-	//String values
-	Config.DBDir = strConfigDefualt("dbDir", os.TempDir()+"/model")
-	os.MkdirAll(Config.DBDir, 0740) //Make dbDir, just in case its not there
-
-	Config.DBType = strConfigDefualt("dbms", "mysql")
-
-	Config.ListenIP = strConfigDefualt("listenIP", "0.0.0.0")
-
+func configLog() error {
+	var err error
 	Config.LogPath = strConfigDefualt("logPath", "stderr")
-
-	//Integer values
-	Config.Threads, err = intConfig("threads", 4, 1)
-	if err != nil {
-		return err
-	}
-
 	Config.LogLevel, err = intConfig("logLevel", 2, 0)
-	if err != nil {
-		return err
-	}
+	return err
+}
 
-	Config.ListenPort, err = intConfig("listenPort", 0, 0)
-	if err != nil {
-		return err
-	}
-
-	Config.TargetPort, err = intConfig("targetPort", 0, 0)
-	if err != nil {
-		return err
-	}
-
+func configHTTP() error {
 	Config.HTTP = viper.GetBool("http")
-	httpIP := strConfigDefualt("httpIP", "127.0.0.1")
-	httpPort, err := intConfig("httpPort", 8070, 1)
+	if Config.HTTP {
+		Config.HTTPPassword = viper.GetString("httpPassword")
+		httpIP := strConfigDefualt("httpIP", "127.0.0.1")
+		httpPort, err := intConfig("httpPort", 8070, 1)
+		if err != nil {
+			return err
+		}
+		Config.HTTPAddr = fmt.Sprintf("%s:%d", httpIP, httpPort)
+	}
+	return nil
+}
+
+//ParseConfig and return error if its not valid
+func ParseConfig(configFile string) error {
+	viper.SetConfigFile(configFile)
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		return fmt.Errorf("Fatal error - config file: %s \n", err)
+	}
+	err = configGeneral()
 	if err != nil {
 		return err
 	}
-	Config.HTTPAddr = fmt.Sprintf("%s:%d", httpIP, httpPort)
+
+	err = configProtect()
+	if err != nil {
+		return err
+	}
+
+	err = configLog()
+	if err != nil {
+		return err
+	}
+
+	err = configHTTP()
+	if err != nil {
+		return err
+	}
 	/* Masking
 	Config.Masks = make(map[string]mask)
 	if viper.IsSet("masks") {

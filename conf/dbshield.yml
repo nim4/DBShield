@@ -38,6 +38,8 @@ httpIP: 127.0.0.1
 # Port number to listen on(default: 8070)
 httpPort: 8070
 
+# Password
+httpPassword: ChangeMe
 
 #############################
 ### Protect               ###
