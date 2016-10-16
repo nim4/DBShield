@@ -16,3 +16,6 @@ install:
 
 build_script:
   - go test -v ./...
+
+after_test:
+  - bash <(curl -s https://codecov.io/bash)

@@ -84,7 +84,6 @@ func (p *Postgres) Handler() (err error) {
 			}
 
 		case 0x58: //Terminate
-			p.server.Write(buf)
 			_, err = p.server.Write(buf)
 			return
 		}

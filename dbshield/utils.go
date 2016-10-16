@@ -28,6 +28,10 @@ func initModel() {
 
 	if err := training.DBCon.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("queries"))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucketIfNotExists([]byte("abnormal"))
 		return err
 	}); err != nil {
 		panic(err)

@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/http"
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/utils"
 )
@@ -78,8 +79,12 @@ func Start(configFile string) (err error) {
 		config.Config.DBType,
 		config.Config.TargetIP,
 		config.Config.TargetPort)
-
 	logger.Infof("Protect: %v", !config.Config.Learning)
+
+	if config.Config.HTTP {
+		go http.Serve(config.Config.HTTPAddr)
+	}
+
 	tasks := make(chan utils.DBMS, 100)
 	results := make(chan error, 100)
 

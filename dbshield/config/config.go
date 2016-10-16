@@ -43,6 +43,9 @@ var Config struct {
 	TLSPrivateKey  string
 	TLSCertificate string
 
+	HTTP     bool
+	HTTPAddr string
+
 	Action     string
 	ActionFunc func(net.Conn) error `json:"-"`
 
@@ -181,6 +184,14 @@ func ParseConfig(configFile string) error {
 	if err != nil {
 		return err
 	}
+
+	Config.HTTP = viper.GetBool("http")
+	httpIP := strConfigDefualt("httpIP", "127.0.0.1")
+	httpPort, err := intConfig("httpPort", 8070, 1)
+	if err != nil {
+		return err
+	}
+	Config.HTTPAddr = fmt.Sprintf("%s:%d", httpIP, httpPort)
 	/* Masking
 	Config.Masks = make(map[string]mask)
 	if viper.IsSet("masks") {
