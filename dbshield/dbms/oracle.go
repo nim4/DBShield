@@ -126,7 +126,7 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 					Query:  string(query),
 					User:   o.username,
 					Client: remoteAddrToIP(o.client.RemoteAddr()),
-					Time:   time.Now(),
+					Time:   time.Now().Unix(),
 				}
 				if config.Config.Learning {
 					go training.AddToTrainingSet(context)

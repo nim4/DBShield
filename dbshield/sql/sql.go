@@ -2,7 +2,6 @@ package sql
 
 import (
 	"strconv"
-	"time"
 
 	"github.com/xwb1989/sqlparser"
 )
@@ -12,7 +11,7 @@ type QueryContext struct {
 	Query  string
 	User   string
 	Client string
-	Time   time.Time
+	Time   int64
 }
 
 //Pattern returns pattern of given query

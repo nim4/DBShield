@@ -73,7 +73,7 @@ func (p *Postgres) Handler() (err error) {
 				Query:  string(query),
 				User:   p.username,
 				Client: remoteAddrToIP(p.client.RemoteAddr()),
-				Time:   time.Now(),
+				Time:   time.Now().Unix(),
 			}
 			if config.Config.Learning {
 				go training.AddToTrainingSet(context)
