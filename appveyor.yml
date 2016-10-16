@@ -1,0 +1,18 @@
+version: "{build}"
+
+os: Windows Server 2012 R2
+
+clone_folder: c:\go\src\github.com\nim4\DBShield
+
+environment:
+  GOPATH: c:\go
+
+install:
+  - echo %PATH%
+  - echo %GOPATH%
+  - go version
+  - go env
+  - go get -v -t ./...
+
+build_script:
+  - go test -v ./...
