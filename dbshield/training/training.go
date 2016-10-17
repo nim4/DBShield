@@ -16,7 +16,7 @@ import (
 var DBCon *bolt.DB
 
 //AddToTrainingSet records query context in local database
-func AddToTrainingSet(context sql.QueryContext) {
+func AddToTrainingSet(context sql.QueryContext) error {
 
 	pattern := sql.Pattern(context.Query)
 	//logger.Debug("Pattern", pattern)
@@ -48,7 +48,9 @@ func AddToTrainingSet(context sql.QueryContext) {
 		return nil
 	}); err != nil {
 		logger.Warning(err)
+		return err
 	}
+	return nil
 }
 
 //CheckQuery pattern, returns true if it finds the pattern
