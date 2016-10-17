@@ -50,7 +50,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	total := 0
 
 	//Count queries
-	if err := training.DBCon.Update(func(tx *bolt.Tx) error {
+	if err := training.DBCon.View(func(tx *bolt.Tx) error {
 		var contextArray []sql.QueryContext
 		b := tx.Bucket([]byte("queries"))
 		if b == nil {

@@ -13,7 +13,7 @@ threads: 4
 # Directory to save internal database(default: in model directory under OS's temp directory)
 dbDir: "/tmp/model/"
 # DBMS type(default: mysql)
-dbms: mysql
+dbms: postgres
 # IP address to listen on(default: 0.0.0.0)
 listenIP: 0.0.0.0
 # Port number to listen on (0 means dbms default port ex. 3306 for mysql)
@@ -71,7 +71,7 @@ additionalChecks:  user,source
 #       0   warning
 #       1   warning + info
 #       2   warning + info + debug (default)
-logLevel: 2
+logLevel: 0
 
 # Log path
 # possible values:

@@ -1,12 +1,10 @@
 package training
 
 import (
-	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/nim4/DBShield/dbshield/config"
@@ -105,12 +103,10 @@ func CheckQuery(context sql.QueryContext) bool {
 			if b == nil {
 				panic(errors.New("Bucket not found"))
 			}
-			key := new(bytes.Buffer)
-			er := binary.Write(key, binary.LittleEndian, time.Now().UnixNano())
-			if err != nil {
-				return er
-			}
-			if er = b.Put(key.Bytes(), pattern); err != nil {
+			id, _ := b.NextSequence()
+			key := make([]byte, 8)
+			binary.BigEndian.PutUint64(key, id)
+			if er := b.Put(key, pattern); er != nil {
 				return er
 			}
 			return nil
