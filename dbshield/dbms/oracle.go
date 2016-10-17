@@ -19,12 +19,18 @@ type Oracle struct {
 	certificate tls.Certificate
 	currentDB   string
 	username    string
+	reader      func(net.Conn) ([]byte, error)
 }
 
 //SetCertificate to use if client asks for SSL
 func (o *Oracle) SetCertificate(crt, key string) (err error) {
 	o.certificate, err = tls.LoadX509KeyPair(crt, key)
 	return
+}
+
+//SetReader function for sockets IO
+func (o *Oracle) SetReader(f func(net.Conn) ([]byte, error)) {
+	o.reader = f
 }
 
 //SetSockets for dbms (client and server sockets)
@@ -79,7 +85,7 @@ func (o *Oracle) Handler() error {
 func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 	for {
 		var b []byte
-		b, err = readPacket(c)
+		b, err = o.reader(c)
 		if err != nil {
 			return
 		}
@@ -88,7 +94,6 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 			break
 		}
 	}
-	//data := buf[8:]
 
 	switch buf[4] { //Packet Type
 	case 0x01: //Connect
@@ -102,8 +107,6 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 
 		logger.Debugf("Connect Data: %s", connectData)
 		logger.Debugf("Service Name: %s", o.currentDB)
-	case 0x02: //Accept
-		//logger.Debug("Accept")
 	case 0x06: //Data
 		data := buf[8:]
 		if data[1] == 0x40 {
@@ -123,10 +126,11 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 				query, _ := pascalString(payload[70:])
 				logger.Infof("Query: %s", query)
 				context := sql.QueryContext{
-					Query:  string(query),
-					User:   o.username,
-					Client: remoteAddrToIP(o.client.RemoteAddr()),
-					Time:   time.Now().Unix(),
+					Query:    string(query),
+					Database: o.currentDB,
+					User:     o.username,
+					Client:   remoteAddrToIP(o.client.RemoteAddr()),
+					Time:     time.Now().Unix(),
 				}
 				if config.Config.Learning {
 					go training.AddToTrainingSet(context)
@@ -141,25 +145,7 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 				o.username = val
 				logger.Infof("Username: %s", o.username)
 			}
-		case 0x10:
-			/* Masking
-			switch payload[1] {
-			case 0x17: // Reading query response
-				payload = payload[72:]
-				var pos uint
-				for {
-					if payload[pos] == 0 {
-						break
-					}
-					column, n := pascalString(payload[pos:])
-					pos += n + 50
-					logger.Debugf("Column: %s", column)
-				}
-			}
-			*/
 		}
-	case 0x0b: //Resend
-		//logger.Debug("Resend")
 	}
 	return
 }

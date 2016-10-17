@@ -9,7 +9,8 @@ const (
 	chunkSize = 256
 )
 
-func readPacket(conn net.Conn) ([]byte, error) {
+//ReadPacket all available data from socket
+func ReadPacket(conn net.Conn) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	for {
 		data := make([]byte, chunkSize)

@@ -19,12 +19,18 @@ type MySQL struct {
 	certificate tls.Certificate
 	currentDB   string
 	username    string
+	reader      func(net.Conn) ([]byte, error)
 }
 
 //SetCertificate to use if client asks for SSL
 func (m *MySQL) SetCertificate(crt, key string) (err error) {
 	m.certificate, err = tls.LoadX509KeyPair(crt, key)
 	return
+}
+
+//SetReader function for sockets IO
+func (m *MySQL) SetReader(f func(net.Conn) ([]byte, error)) {
+	m.reader = f
 }
 
 //SetSockets for dbms (client and server sockets)
@@ -46,7 +52,7 @@ func (m *MySQL) DefaultPort() uint {
 
 //Handler gets incoming requests
 func (m *MySQL) Handler() error {
-	defer handlePanic()
+	//defer handlePanic()
 
 	success, err := m.handleLogin()
 	if err != nil {
@@ -58,7 +64,7 @@ func (m *MySQL) Handler() error {
 	}
 	for {
 		var buf []byte
-		buf, err = readPacket(m.client)
+		buf, err = m.reader(m.client)
 		if err != nil {
 			return err
 		}
@@ -74,10 +80,11 @@ func (m *MySQL) Handler() error {
 			query := data[1:]
 			logger.Infof("Query: %s", query)
 			context := sql.QueryContext{
-				Query:  string(query),
-				User:   m.username,
-				Client: remoteAddrToIP(m.client.RemoteAddr()),
-				Time:   time.Now().Unix(),
+				Query:    string(query),
+				Database: m.currentDB,
+				User:     m.username,
+				Client:   remoteAddrToIP(m.client.RemoteAddr()),
+				Time:     time.Now().Unix(),
 			}
 			if config.Config.Learning {
 				go training.AddToTrainingSet(context)
@@ -98,106 +105,12 @@ func (m *MySQL) Handler() error {
 			return err
 		}
 		//Recive response
-		buf, err = readPacket(m.server)
+		buf, err = m.reader(m.server)
 		if err != nil {
 			return err
 		}
-		/* Masking
-		if queryRequest && buf[0] == 0x1 {
-			orginalColumns := []string{}
-			var db, orginalTable string
-			data = buf[5:]
-			//Get Columns
-			for i := 0; uint(i) < uint(buf[4]); i++ {
-				var pos uint = 4
-				//Catalog
-				_, n := pascalString(data[pos:])
-				pos += n + 1
 
-				//DB name
-				db, n = pascalString(data[pos:])
-				pos += n + 1
-
-				//in query table name
-				_, n = pascalString(data[pos:])
-				pos += n + 1
-
-				//orginal table name
-				orginalTable, n = pascalString(data[pos:])
-				pos += n + 1
-
-				//in query name ("count(*)", ...)
-				qName, n := pascalString(data[pos:])
-				pos += n + 1
-
-				//orginal name
-				orginalName, n := pascalString(data[pos:])
-				pos += n + 1
-
-				//If name is empty use qName so user can still write Masking rule
-				if len(orginalName) == 0 {
-					orginalName = qName
-				}
-
-				orginalColumns = append(orginalColumns, orginalName)
-				// Filler [uint8]
-				// Charset [charset, collation uint8]
-				// Length [uint32]
-				pos += 1 + 2 + 4
-
-				// Field type [uint8]
-				//fieldType := data[pos]
-				pos++
-				// Flags [uint16]
-				//flags := uint16(binary.LittleEndian.Uint16(data[pos : pos+2]))
-				pos += 2
-
-				// Decimals [uint8]
-				//decimals := data[pos]
-
-				data = data[threeByteBigEndianToInt(data[:3])+4:]
-
-			}
-			logger.Debugf("Columns: %v", orginalColumns)
-			//Get rows
-			if len(orginalColumns) > 0 {
-				if (data[0] == 0x05) && (len(data) > 4 || data[4] == 0xfe) { //Skip first  segment
-					data = data[9:] //0x05 + 4
-				}
-			RowLoop:
-				for {
-					var rowLen = threeByteBigEndianToInt(data[:3]) + 4
-					var pos uint = 4
-					for _, col := range orginalColumns {
-						if rowLen == pos {
-							break
-						}
-						if (data[pos] == 0xff) || (data[pos] == 0xfe) { //}&& (data[pos+1] == 0) && (data[pos+2] == 0)) {
-							break RowLoop
-						} else if data[pos] == 0xfb {
-							pos++
-							continue
-						}
-						val, n := pascalString(data[pos:])
-						logger.Debugf("Val: %s", val)
-						pos++
-						//Key to find masking rule
-						key := db + "." + orginalTable + "." + col
-						logger.Debugf("Key: %s", key)
-
-						mask, ok := getMask(key, []byte(val))
-						if ok {
-							copy(data[pos:], mask)
-						}
-
-						pos += n
-
-					}
-					data = data[threeByteBigEndianToInt(data[:3])+4:]
-				}
-			}
-		}
-		*/
+		//Send response to client
 		_, err = m.client.Write(buf)
 		if err != nil {
 			return err
@@ -207,10 +120,11 @@ func (m *MySQL) Handler() error {
 
 func (m *MySQL) handleLogin() (success bool, err error) {
 	//Receive Server Greeting
-	buf, err := readPacket(m.server)
+	buf, err := m.reader(m.server)
 	if err != nil {
 		return
 	}
+	/* Extra Info
 	data := buf[4:]
 	nullByteIndex := bytes.IndexByte(data[1:], 0x00)
 	logger.Infof("Version: %s", data[1:nullByteIndex+1])
@@ -223,7 +137,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	logger.Debugf("Cipher: 0x%x", cipher)
 	if err != nil {
 		return
-	}
+	}*/
 
 	//Send Server Greeting to client
 	_, err = m.client.Write(buf)
@@ -232,11 +146,11 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	}
 
 	//Receive Login Request
-	buf, err = readPacket(m.client)
+	buf, err = m.reader(m.client)
 	if err != nil {
 		return
 	}
-	data = buf[4:]
+	data := buf[4:]
 
 	m.username, _, m.currentDB = getUsernameHashDB(data)
 
@@ -261,7 +175,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 		logger.Debug("Client handshake done")
 
 		//Read TLS Hello
-		buf, err = readPacket(m.client)
+		buf, err = m.reader(m.client)
 		if err != nil {
 			return
 		}
@@ -286,13 +200,13 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 
 	if len(m.currentDB) != 0 { //db Selected
 		//Receive OK
-		buf, err = readPacket(m.server)
+		buf, err = m.reader(m.server)
 		if err != nil {
 			return
 		}
 	} else {
 		//Receive Auth Switch Request
-		buf, err = readPacket(m.server)
+		buf, err = m.reader(m.server)
 		if err != nil {
 			return
 		}
@@ -302,7 +216,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 			return
 		}
 		//Receive Auth Switch Response
-		buf, err = readPacket(m.client)
+		buf, err = m.reader(m.client)
 		if err != nil {
 			return
 		}
@@ -313,7 +227,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 			return
 		}
 		//Receive Response Status
-		buf, err = readPacket(m.server)
+		buf, err = m.reader(m.server)
 		if err != nil {
 			return
 		}

@@ -8,10 +8,11 @@ import (
 
 //QueryContext holds information around query
 type QueryContext struct {
-	Query  string
-	User   string
-	Client string
-	Time   int64
+	Query    string
+	User     string
+	Client   string
+	Database string
+	Time     int64
 }
 
 //Pattern returns pattern of given query

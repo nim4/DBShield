@@ -6,6 +6,7 @@ import "net"
 type DBMS interface {
 	DefaultPort() uint
 	Close()
+	SetReader(func(net.Conn) ([]byte, error))
 	Handler() error
 	SetSockets(net.Conn, net.Conn)
 	SetCertificate(string, string) error

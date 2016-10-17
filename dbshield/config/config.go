@@ -179,7 +179,7 @@ func configProtect() error {
 func configLog() error {
 	var err error
 	Config.LogPath = strConfigDefualt("logPath", "stderr")
-	Config.LogLevel, err = intConfig("logLevel", 2, 0)
+	Config.LogLevel, err = intConfig("logLevel", 0, 0)
 	return err
 }
 

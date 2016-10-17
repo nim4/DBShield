@@ -29,3 +29,8 @@ func TestThreeByteBigEndianToInt(t *testing.T) {
 		t.Error("Expected 197121, got ", res)
 	}
 }
+
+func TestHandlePanic(t *testing.T) {
+	defer handlePanic()
+	panic("")
+}

@@ -25,18 +25,3 @@ func handlePanic() {
 func threeByteBigEndianToInt(data []byte) uint {
 	return uint(data[2])*65536 + uint(data[1])*256 + uint(data[0])
 }
-
-/* Masking
-func getMask(key string, data []byte) ([]byte, bool) {
-	if mask, ok := config.Config.Masks[key]; ok {
-		initLen := len(data)
-		logger.Debug("Masking")
-		data = mask.MatchExp.ReplaceAll(data, mask.ReplaceExp)
-		if len(data) < initLen {
-			data = append(data, bytes.Repeat(mask.PaddingCharacter, initLen-len(data))...)
-		}
-		return data[:initLen], true
-	}
-	return nil, false
-}
-*/

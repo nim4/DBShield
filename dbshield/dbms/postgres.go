@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/binary"
+	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -21,12 +22,18 @@ type Postgres struct {
 	certificate tls.Certificate
 	currentDB   string
 	username    string
+	reader      func(net.Conn) ([]byte, error)
 }
 
 //SetCertificate to use if client asks for SSL
 func (p *Postgres) SetCertificate(crt, key string) (err error) {
 	p.certificate, err = tls.LoadX509KeyPair(crt, key)
 	return
+}
+
+//SetReader function for sockets IO
+func (p *Postgres) SetReader(f func(net.Conn) ([]byte, error)) {
+	p.reader = f
 }
 
 //SetSockets for dbms (client and server sockets)
@@ -48,8 +55,7 @@ func (p *Postgres) DefaultPort() uint {
 
 //Handler gets incoming requests
 func (p *Postgres) Handler() (err error) {
-	//defer handlePanic() <-- TODO: Uncomment!
-
+	defer handlePanic()
 	success, err := p.handleLogin()
 	if err != nil {
 		return
@@ -61,19 +67,21 @@ func (p *Postgres) Handler() (err error) {
 	for {
 		var buf []byte
 		//Read client request
-		buf, err = readPacket(p.client)
+		buf, err = p.reader(p.client)
 		if err != nil {
 			return
 		}
 		switch buf[0] {
 		case 0x51: //Simple query
 			query := buf[5:]
+			fmt.Printf("Query: %s", query)
 			logger.Infof("Query: %s", query)
 			context := sql.QueryContext{
-				Query:  string(query),
-				User:   p.username,
-				Client: remoteAddrToIP(p.client.RemoteAddr()),
-				Time:   time.Now().Unix(),
+				Query:    string(query),
+				Database: p.currentDB,
+				User:     p.username,
+				Client:   remoteAddrToIP(p.client.RemoteAddr()),
+				Time:     time.Now().Unix(),
 			}
 			if config.Config.Learning {
 				go training.AddToTrainingSet(context)
@@ -95,38 +103,11 @@ func (p *Postgres) Handler() (err error) {
 		}
 
 		//Read result from server
-		buf, err = readPacket(p.server)
+		buf, err = p.reader(p.server)
 		if err != nil {
 			return
 		}
 
-		/*
-			switch buf[0] {
-			case 0x54: //Row decription
-				count := binary.BigEndian.Uint16(buf[5:7])
-				data := buf[7:]
-				for i := uint16(0); i < count; i++ {
-					nullByteIndex := bytes.IndexByte(data, 0x00)
-					column := string(data[:nullByteIndex+1])
-					logger.Debug("Column:", column)
-					data = data[nullByteIndex+19:]
-				}
-				for {
-					if data[0] != 0x44 { //Row
-						break
-					}
-					count := binary.BigEndian.Uint16(data[5:7])
-					data = data[7:]
-					for i := uint16(0); i < count; i++ {
-						size := binary.BigEndian.Uint32(data[:4])
-						value := string(data[4 : 4+size])
-						logger.Debug("value:", value)
-						data = data[4+size:]
-					}
-					//
-				}
-			}
-		*/
 		//Send result to client
 		_, err = p.client.Write(buf)
 		if err != nil {
@@ -137,7 +118,7 @@ func (p *Postgres) Handler() (err error) {
 
 func (p *Postgres) handleLogin() (success bool, err error) {
 	//Receive Greeting
-	buf, err := readPacket(p.client)
+	buf, err := p.reader(p.client)
 	if err != nil {
 		return
 	}
@@ -149,7 +130,7 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 	}
 
 	//Receive Greeting
-	buf, err = readPacket(p.server)
+	buf, err = p.reader(p.server)
 	if err != nil {
 		return
 	}
@@ -184,7 +165,7 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 	}
 
 	//Receive username and database name
-	buf, err = readPacket(p.client)
+	buf, err = p.reader(p.client)
 	if err != nil {
 		return
 	}
@@ -222,7 +203,7 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 	}
 
 	//Read authentication request from server
-	buf, err = readPacket(p.server)
+	buf, err = p.reader(p.server)
 	if err != nil {
 		return
 	}
@@ -234,7 +215,7 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 	}
 
 	//Read client password message
-	buf, err = readPacket(p.client)
+	buf, err = p.reader(p.client)
 	if err != nil {
 		return
 	}
@@ -246,7 +227,7 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 	}
 
 	//Read authtentication result from server
-	buf, err = readPacket(p.server)
+	buf, err = p.reader(p.server)
 	if err != nil {
 		return
 	}
