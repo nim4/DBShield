@@ -1,6 +1,7 @@
 [![Linux & OS X](https://travis-ci.org/nim4/DBShield.svg?branch=master "Linux & OS X")](https://travis-ci.org/nim4/DBShield)
 [![Windows](https://ci.appveyor.com/api/projects/status/github/nim4/DBShield?branch=master&svg=true "Windows")](https://ci.appveyor.com/project/nim4/DBShield/branch/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nim4/DBShield)](https://goreportcard.com/report/github.com/nim4/DBShield)
+[![codecov](https://codecov.io/gh/nim4/DBShield/branch/master/graph/badge.svg)](https://codecov.io/gh/nim4/DBShield)
 [![Dev chat](https://img.shields.io/badge/gitter-chat-20cc20.svg "Dev chat")](https://gitter.im/DBShield/Lobby)
 [![GoDoc](https://godoc.org/github.com/nim4/DBShield?status.svg)](https://godoc.org/github.com/nim4/DBShield)
 
