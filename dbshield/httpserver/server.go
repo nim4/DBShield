@@ -1,4 +1,4 @@
-package http
+package httpserver
 
 import (
 	"encoding/json"
@@ -16,7 +16,8 @@ import (
 
 var cookieHandler = securecookie.New(
 	securecookie.GenerateRandomKey(64),
-	securecookie.GenerateRandomKey(32))
+	securecookie.GenerateRandomKey(32),
+)
 
 //Serve HTTPS
 func Serve() {

@@ -11,7 +11,7 @@ import (
 
 	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/dbms"
-	"github.com/nim4/DBShield/dbshield/http"
+	"github.com/nim4/DBShield/dbshield/httpserver"
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/utils"
 )
@@ -83,7 +83,7 @@ func Start(configFile string) (err error) {
 	logger.Infof("Protect: %v", !config.Config.Learning)
 
 	if config.Config.HTTP {
-		go http.Serve()
+		go httpserver.Serve()
 	}
 
 	tasks := make(chan utils.DBMS, 100)
