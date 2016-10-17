@@ -76,7 +76,29 @@ func TestPostgres(t *testing.T) {
 	p.SetSockets(s, s)
 	err = p.Handler()
 	if err != nil {
-		t.Error("Not Expected error", err)
+		t.Error("Got error", err)
 	}
 	p.Close()
+
+	postgresCount = 0
+	var es mockConnError
+	p.SetSockets(es, es)
+	err = p.Handler()
+	if err == nil {
+		t.Error("Expected error")
+	}
+
+	postgresCount = 0
+	p.SetSockets(es, s)
+	err = p.Handler()
+	if err == nil {
+		t.Error("Expected error")
+	}
+
+	postgresCount = 0
+	p.SetSockets(s, es)
+	err = p.Handler()
+	if err == nil {
+		t.Error("Expected error")
+	}
 }

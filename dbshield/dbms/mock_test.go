@@ -1,6 +1,7 @@
 package dbms_test
 
 import (
+	"errors"
 	"net"
 	"time"
 )
@@ -39,4 +40,42 @@ func (m mockConn) SetReadDeadline(t time.Time) error {
 
 func (m mockConn) SetWriteDeadline(t time.Time) error {
 	return nil
+}
+
+type mockConnError struct {
+}
+
+func (m mockConnError) Read(b []byte) (n int, err error) {
+	err = errors.New("Dummy Error")
+	return
+}
+
+func (m mockConnError) Write(b []byte) (n int, err error) {
+	err = errors.New("Dummy Error")
+	return
+}
+
+func (m mockConnError) Close() error {
+	return errors.New("Dummy Error")
+}
+
+func (m mockConnError) LocalAddr() net.Addr {
+	addr, _ := net.ResolveTCPAddr("tcp", ":80")
+	return addr
+}
+
+func (m mockConnError) RemoteAddr() net.Addr {
+	return m.LocalAddr()
+}
+
+func (m mockConnError) SetDeadline(t time.Time) error {
+	return errors.New("Dummy Error")
+}
+
+func (m mockConnError) SetReadDeadline(t time.Time) error {
+	return errors.New("Dummy Error")
+}
+
+func (m mockConnError) SetWriteDeadline(t time.Time) error {
+	return errors.New("Dummy Error")
 }

@@ -84,7 +84,29 @@ func TestMySQL(t *testing.T) {
 	m.SetSockets(s, s)
 	err = m.Handler()
 	if err != nil {
-		t.Error("Not Expected error", err)
+		t.Error("Got error", err)
 	}
 	m.Close()
+
+	mysqlCount = 0
+	var es mockConnError
+	m.SetSockets(es, es)
+	err = m.Handler()
+	if err == nil {
+		t.Error("Expected error")
+	}
+
+	mysqlCount = 0
+	m.SetSockets(es, s)
+	err = m.Handler()
+	if err == nil {
+		t.Error("Expected error")
+	}
+
+	mysqlCount = 0
+	m.SetSockets(s, es)
+	err = m.Handler()
+	if err == nil {
+		t.Error("Expected error")
+	}
 }

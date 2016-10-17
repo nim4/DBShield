@@ -15,4 +15,9 @@ func TestReadPacket(t *testing.T) {
 	if len(buf) != 0 {
 		t.Errorf("Expected empty buff, got %s", buf)
 	}
+	var es mockConnError
+	_, err = dbms.ReadPacket(es)
+	if err == nil {
+		t.Errorf("Expected error")
+	}
 }
