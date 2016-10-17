@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/binary"
-	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -74,7 +73,6 @@ func (p *Postgres) Handler() (err error) {
 		switch buf[0] {
 		case 0x51: //Simple query
 			query := buf[5:]
-			fmt.Printf("Query: %s", query)
 			logger.Infof("Query: %s", query)
 			context := sql.QueryContext{
 				Query:    string(query),
