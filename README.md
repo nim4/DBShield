@@ -22,7 +22,7 @@ By adding DBShield in front of database server we can protect it against abnorma
 ![Learning mode](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_02.png)
 
 
-After collecting enough patterns we can run DBShield in protect mode. Protect mode can distinguish abnormal query patterns, user and source and take action based on configurations.
+After collecting enough patterns we can run DBShield in protect mode. Protect mode can distinguish abnormal query pattern, user and source and take action based on configurations.
 
 ![Protect mode](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_03.png)
 

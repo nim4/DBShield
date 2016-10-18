@@ -1,6 +1,7 @@
 package dbms_test
 
 import (
+	"errors"
 	"net"
 	"testing"
 
@@ -57,6 +58,8 @@ func postgresDummyReader(c net.Conn) (buf []byte, err error) {
 	if postgresCount < len(sampleIO) {
 		buf = sampleIO[postgresCount]
 		postgresCount++
+	} else {
+		err = errors.New("EOF")
 	}
 	return
 }
@@ -79,26 +82,4 @@ func TestPostgres(t *testing.T) {
 		t.Error("Got error", err)
 	}
 	p.Close()
-
-	postgresCount = 0
-	var es mockConnError
-	p.SetSockets(es, es)
-	err = p.Handler()
-	if err == nil {
-		t.Error("Expected error")
-	}
-
-	postgresCount = 0
-	p.SetSockets(es, s)
-	err = p.Handler()
-	if err == nil {
-		t.Error("Expected error")
-	}
-
-	postgresCount = 0
-	p.SetSockets(s, es)
-	err = p.Handler()
-	if err == nil {
-		t.Error("Expected error")
-	}
 }

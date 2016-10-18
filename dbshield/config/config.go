@@ -134,7 +134,10 @@ func configGeneral() error {
 	}
 
 	Config.DBDir = strConfigDefualt("dbDir", os.TempDir()+"/model")
-	os.MkdirAll(Config.DBDir, 0740) //Make dbDir, just in case its not there
+	err = os.MkdirAll(Config.DBDir, 0740) //Make dbDir, just in case its not there
+	if err != nil {
+		return err
+	}
 
 	Config.DBType = strConfigDefualt("dbms", "mysql")
 
@@ -144,32 +147,30 @@ func configGeneral() error {
 }
 
 func configProtect() error {
-	if !Config.Learning {
-		if viper.IsSet("action") {
-			Config.Action = viper.GetString("action")
-			switch Config.Action {
-			case "drop": //Close the connection
-				Config.ActionFunc = utils.ActionDrop
-			case "pass": //Pass the query to server
-				Config.ActionFunc = nil
-			default:
-				return errors.New("Invalid 'action' cofiguration: " + Config.Action)
-			}
-		} else {
-			logger.Infof("'action' not configured, assuming: drop")
+	if viper.IsSet("action") {
+		Config.Action = viper.GetString("action")
+		switch Config.Action {
+		case "drop": //Close the connection
 			Config.ActionFunc = utils.ActionDrop
+		case "pass": //Pass the query to server
+			Config.ActionFunc = nil
+		default:
+			return errors.New("Invalid 'action' cofiguration: " + Config.Action)
 		}
+	} else {
+		logger.Infof("'action' not configured, assuming: drop")
+		Config.ActionFunc = utils.ActionDrop
+	}
 
-		if viper.IsSet("additionalChecks") {
-			for _, check := range strings.Split(viper.GetString("additionalChecks"), ",") {
-				switch check {
-				case "user":
-					Config.CheckUser = true
-				case "source":
-					Config.CheckSource = true
-				default:
-					return errors.New("Invalid 'additionalChecks' cofiguration: " + check)
-				}
+	if viper.IsSet("additionalChecks") {
+		for _, check := range strings.Split(viper.GetString("additionalChecks"), ",") {
+			switch check {
+			case "user":
+				Config.CheckUser = true
+			case "source":
+				Config.CheckSource = true
+			default:
+				return errors.New("Invalid 'additionalChecks' cofiguration: " + check)
 			}
 		}
 	}
@@ -209,9 +210,11 @@ func ParseConfig(configFile string) error {
 		return err
 	}
 
-	err = configProtect()
-	if err != nil {
-		return err
+	if !Config.Learning {
+		err = configProtect()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = configLog()
@@ -223,21 +226,5 @@ func ParseConfig(configFile string) error {
 	if err != nil {
 		return err
 	}
-	/* Masking
-	Config.Masks = make(map[string]mask)
-	if viper.IsSet("masks") {
-		tmpMasks := viper.Get("masks").([]interface{})
-		for _, tm := range tmpMasks {
-			m := tm.(map[interface{}]interface{})
-			key := m["database"].(string) + "." + m["table"].(string) + "." + m["column"].(string)
-			padding := []byte(m["paddingCharacter"].(string))
-			Config.Masks[key] = mask{
-				MatchExp:         regexp.MustCompile(m["matchRegEx"].(string)),
-				ReplaceExp:       []byte(m["replaceRegEx"].(string)),
-				PaddingCharacter: []byte{padding[0]},
-			}
-		}
-	}
-	*/
 	return nil
 }

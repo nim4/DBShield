@@ -1,6 +1,7 @@
 package dbms_test
 
 import (
+	"errors"
 	"net"
 	"testing"
 
@@ -65,6 +66,8 @@ func mysqlDummyReader(c net.Conn) (buf []byte, err error) {
 	if mysqlCount < len(sampleIO) {
 		buf = sampleIO[mysqlCount]
 		mysqlCount++
+	} else {
+		err = errors.New("EOF")
 	}
 	return
 }
@@ -87,26 +90,4 @@ func TestMySQL(t *testing.T) {
 		t.Error("Got error", err)
 	}
 	m.Close()
-
-	mysqlCount = 0
-	var es mockConnError
-	m.SetSockets(es, es)
-	err = m.Handler()
-	if err == nil {
-		t.Error("Expected error")
-	}
-
-	mysqlCount = 0
-	m.SetSockets(es, s)
-	err = m.Handler()
-	if err == nil {
-		t.Error("Expected error")
-	}
-
-	mysqlCount = 0
-	m.SetSockets(s, es)
-	err = m.Handler()
-	if err == nil {
-		t.Error("Expected error")
-	}
 }

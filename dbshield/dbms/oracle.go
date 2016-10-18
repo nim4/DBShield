@@ -83,16 +83,21 @@ func (o *Oracle) Handler() error {
 
 //wrapper around our classic readPacket to handle segmented packets
 func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
+	buf, err = o.reader(c)
+	if err != nil {
+		return
+	}
+	packetLen := int(buf[0])*256 + int(buf[1])
 	for {
+		if len(buf) == packetLen {
+			break
+		}
 		var b []byte
 		b, err = o.reader(c)
 		if err != nil {
 			return
 		}
 		buf = append(buf, b...)
-		if len(buf) == int(buf[0])*256+int(buf[1]) {
-			break
-		}
 	}
 
 	switch buf[4] { //Packet Type
