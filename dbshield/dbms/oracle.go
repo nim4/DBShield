@@ -6,10 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/sql"
-	"github.com/nim4/DBShield/dbshield/training"
 )
 
 //Oracle DBMS
@@ -129,7 +127,6 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 			switch payload[1] {
 			case 0x5e: //reading query
 				query, _ := pascalString(payload[70:])
-				logger.Infof("Query: %s", query)
 				context := sql.QueryContext{
 					Query:    string(query),
 					Database: o.currentDB,
@@ -137,14 +134,7 @@ func (o *Oracle) readPacket(c net.Conn) (buf []byte, eof bool, err error) {
 					Client:   remoteAddrToIP(o.client.RemoteAddr()),
 					Time:     time.Now().Unix(),
 				}
-				if config.Config.Learning {
-					go training.AddToTrainingSet(context)
-				} else {
-					if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
-						err = config.Config.ActionFunc(o.client)
-						return
-					}
-				}
+				processContext(context)
 			case 0x76: // Reading username
 				val, _ := pascalString(payload[19:])
 				o.username = val

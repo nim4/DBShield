@@ -6,10 +6,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/sql"
-	"github.com/nim4/DBShield/dbshield/training"
 )
 
 //MySQL DBMS
@@ -86,17 +84,11 @@ func (m *MySQL) Handler() error {
 				Client:   remoteAddrToIP(m.client.RemoteAddr()),
 				Time:     time.Now().Unix(),
 			}
-			if config.Config.Learning {
-				go training.AddToTrainingSet(context)
-			} else {
-				if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
-					return config.Config.ActionFunc(m.client)
-				}
-			}
-		case 0x04: //Show fields
-			logger.Debugf("Show fields: %s", data[1:])
-		default:
-			logger.Debugf("Unknown Data[0]: %x", data[0])
+			processContext(context)
+			// case 0x04: //Show fields
+			// 	logger.Debugf("Show fields: %s", data[1:])
+			// default:
+			// 	logger.Debugf("Unknown Data[0]: %x", data[0])
 		}
 
 		//Send query/request to server

@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"regexp"
 	"strings"
@@ -48,7 +47,7 @@ var Config struct {
 	HTTPPassword string
 
 	Action     string
-	ActionFunc func(net.Conn) error `json:"-"`
+	ActionFunc func() error `json:"-"`
 
 	//Key-> database.table.column
 	//Masks map[string]mask

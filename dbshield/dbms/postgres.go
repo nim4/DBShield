@@ -8,10 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/sql"
-	"github.com/nim4/DBShield/dbshield/training"
 )
 
 //Postgres DBMS
@@ -72,22 +70,14 @@ func (p *Postgres) Handler() (err error) {
 		}
 		switch buf[0] {
 		case 0x51: //Simple query
-			query := buf[5:]
-			logger.Infof("Query: %s", query)
 			context := sql.QueryContext{
-				Query:    string(query),
+				Query:    string(buf[5:]),
 				Database: p.currentDB,
 				User:     p.username,
 				Client:   remoteAddrToIP(p.client.RemoteAddr()),
 				Time:     time.Now().Unix(),
 			}
-			if config.Config.Learning {
-				go training.AddToTrainingSet(context)
-			} else {
-				if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
-					return config.Config.ActionFunc(p.client)
-				}
-			}
+			processContext(context)
 
 		case 0x58: //Terminate
 			_, err = p.server.Write(buf)
