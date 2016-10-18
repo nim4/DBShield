@@ -94,7 +94,7 @@ $ $GOPATH/bin/DBShield -c config.yml
 
 (Sorted by priority)
 
- - Get 70% code coverage
+ - Get 70% test coverage
  - Improve documentation
  - Support Oracle SSL
  - Add Microsoft SQL Server
