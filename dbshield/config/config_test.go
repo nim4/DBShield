@@ -65,6 +65,11 @@ func TestIntConfig(t *testing.T) {
 }
 
 func TestConfigGeneral(t *testing.T) {
+	viper.Reset()
+	viper.Set("targetIP", "127.0.0.1")
+	viper.Set("tlsPrivateKey", "key")
+	viper.Set("tlsCertificate", "cert")
+
 	viper.Set("mode", "protect")
 	err := configGeneral()
 	if err != nil {
@@ -82,6 +87,7 @@ func TestConfigGeneral(t *testing.T) {
 	if err != nil {
 		t.Error("Got error", err)
 	}
+	viper.Set("mode", "learning")
 
 	viper.Set("threads", "Invalid")
 	err = configGeneral()
@@ -103,29 +109,31 @@ func TestConfigGeneral(t *testing.T) {
 		t.Error("Expected error")
 	}
 	viper.Set("targetPort", 0)
-	/*
-		viper.Set("targetIP", nil)
-		err = configGeneral()
-		if err == nil {
-			t.Error("Expected error")
-		}
-		viper.Set("targetIP", "127.0.0.1")
 
+	viper.Reset()
+	err = configGeneral()
+	if err == nil {
+		t.Error("Expected error")
+	}
+	viper.Set("targetIP", "127.0.0.1")
 
-		viper.Set("tlsPrivateKey", nil)
-		err = configGeneral()
-		if err == nil {
-			t.Error("Expected error")
-		}
-		viper.Set("TLSPrivateKey", "key")
+	viper.Reset()
+	viper.Set("targetIP", "127.0.0.1")
+	viper.Set("tlsPrivateKey", "key")
+	err = configGeneral()
+	if err == nil {
+		t.Error("Expected error")
+	}
 
-		viper.Set("tlsCertificate", nil)
-		err = configGeneral()
-		if err == nil {
-			t.Error("Expected error")
-		}
-		viper.Set("tlsCertificate", "cert")
-	*/
+	viper.Reset()
+	viper.Set("targetIP", "127.0.0.1")
+	viper.Set("tlsCertificate", "cert")
+	err = configGeneral()
+	if err == nil {
+		t.Error("Expected error")
+	}
+	viper.Set("tlsPrivateKey", "key")
+
 	// Can't make directory named after file.
 	fpath := os.TempDir() + "/file"
 	f, err := os.Create(fpath)
