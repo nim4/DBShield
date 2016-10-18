@@ -91,7 +91,7 @@ func intConfig(key string, defaultValue, min uint) (ret uint, err error) {
 	return
 }
 
-func configGeneral() error {
+func configGeneral() (err error) {
 	if viper.IsSet("mode") {
 		switch viper.GetString("mode") {
 		case "protect":
@@ -105,7 +105,6 @@ func configGeneral() error {
 		logger.Infof("'mode' not configured, assuming: learning")
 		Config.Learning = true
 	}
-	var err error
 
 	Config.Threads, err = intConfig("threads", 4, 1)
 	if err != nil {

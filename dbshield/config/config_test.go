@@ -111,20 +111,21 @@ func TestConfigGeneral(t *testing.T) {
 	}
 	viper.Set("targetIP", "127.0.0.1")
 
-	viper.Set("tlsPrivateKey", nil)
-	err = configGeneral()
-	if err == nil {
-		t.Error("Expected error")
-	}
-	viper.Set("TLSPrivateKey", "key")
+	/*
+		viper.Set("tlsPrivateKey", nil)
+		err = configGeneral()
+		if err == nil {
+			t.Error("Expected error")
+		}
+		viper.Set("TLSPrivateKey", "key")
 
-	viper.Set("tlsCertificate", nil)
-	err = configGeneral()
-	if err == nil {
-		t.Error("Expected error")
-	}
-	viper.Set("tlsCertificate", "cert")
-
+		viper.Set("tlsCertificate", nil)
+		err = configGeneral()
+		if err == nil {
+			t.Error("Expected error")
+		}
+		viper.Set("tlsCertificate", "cert")
+	*/
 	// Can't make directory named after file.
 	fpath := os.TempDir() + "/file"
 	f, err := os.Create(fpath)
