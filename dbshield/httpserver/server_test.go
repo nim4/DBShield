@@ -72,6 +72,9 @@ func TestMainHandler(t *testing.T) {
 	r.Header.Set("Cookie", w.HeaderMap.Get("Set-Cookie"))
 	mainHandler(w, r)
 	body, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
 	if strings.Index(string(body), "\"Logout\"") == -1 {
 		t.Error("Expected report page")
 	}
