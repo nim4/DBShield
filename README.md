@@ -26,17 +26,20 @@ After collecting enough patterns we can run DBShield in protect mode. Protect mo
 
 ![Protect mode](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_03.png)
 
-**Sample Output:**
+## Sample Outputs
+
+**CLI**
 
 ```
 $ go run main.go
 2016/10/15 16:25:31 [INFO]  Config file: /etc/dbshield.yml
 2016/10/15 16:25:31 [INFO]  Internal DB: /tmp/model/127.0.0.1_postgres.db
 2016/10/15 16:25:31 [INFO]  Listening: 0.0.0.0:5000 (Threads: 5)
-2016/10/15 16:25:31 [INFO]  Backend: postgres (127.0.0.1:5432)
+2016/10/15 16:25:31 [INFO]  Backend: postgres 10.0.0.21:5432)
 2016/10/15 16:25:31 [INFO]  Protect: true
-2016/10/15 16:25:33 [INFO]  Connected from: 127.0.0.1:35910
-2016/10/15 16:25:33 [INFO]  Connected to: 127.0.0.1:5432
+2016/10/15 16:25:31 [INFO]  Web interface on https://127.0.0.1:8070/
+2016/10/15 16:25:33 [INFO]  Connected from: 10.0.0.20:35910
+2016/10/15 16:25:33 [INFO]  Connected to: 10.0.0.21:5432
 2016/10/15 16:25:33 [INFO]  SSL connection
 2016/10/15 16:25:34 [DEBUG] Client handshake done
 2016/10/15 16:25:34 [DEBUG] Server handshake done
@@ -47,16 +50,36 @@ $ go run main.go
 2016/10/15 16:25:34 [WARN]  Dropping connection
 ```
 
+
+**Web Interface**
+
+![Web UI](https://raw.githubusercontent.com/nim4/DBShield/master/misc/graph.png)
+
 ## Installation
 
+Get it
 ```
 $ go get -u github.com/nim4/DBShield
 ```
 
-then you can execute it like:
+Then you can get help using "-h" argument:
 ```
-$ $GOPATH/bin/DBShield -c $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
+$ $GOPATH/bin/DBShield -h
+DBShield 1.0-beta
+Usage of DBShield:
+  -c string
+    	Config file (default "/etc/dbshield.yml")
+  -h	Show help
+  -k	Show parsed config and exit
+  -version
+    	Show version
 ```
+
+and run it with your configuration like:
+```
+$ $GOPATH/bin/DBShield -c config.yml
+```
+[Sample configuration  file](https://github.com/nim4/DBShield/blob/master/conf/dbshield.yml)
 
 ## Supports:
 
@@ -67,11 +90,12 @@ $ $GOPATH/bin/DBShield -c $GOPATH/src/github.com/nim4/DBShield/conf/dbshield.yml
 | **Oracle**   | ![Yes](https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png) | ![No](https://raw.githubusercontent.com/nim4/DBShield/master/misc/no.png)  |
 | **Postgres** | ![Yes](https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png) | ![Yes](https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png) |
 
-## More
-- [Sample configuration  file](https://github.com/nim4/DBShield/blob/master/conf/dbshield.yml)
-
 ## To Do
 
+(Sorted by priority)
+
+ - Get 70% coverage
+ - Improve documentation
+ - Check Oracle SSL
  - Add Microsoft SQL Server
  - Add more command-line arguments
- - Improve documentation
