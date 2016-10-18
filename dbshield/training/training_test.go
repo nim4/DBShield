@@ -46,6 +46,10 @@ func TestAddToTrainingSet(t *testing.T) {
 	if err != nil {
 		t.Error("Not Expected error", err)
 	}
+	err = training.AddToTrainingSet(sql.QueryContext{})
+	if err == nil {
+		t.Error("Expected error")
+	}
 }
 
 func TestCheckQuery(t *testing.T) {
@@ -69,5 +73,20 @@ func TestCheckQuery(t *testing.T) {
 	}
 	if training.CheckQuery(c2) {
 		t.Error("Expected true")
+	}
+
+	tmpCon := training.DBCon
+	defer func() {
+		training.DBCon = tmpCon
+	}()
+	tmpfile, err := ioutil.TempFile("", "testdb")
+	if err != nil {
+		panic(err)
+	}
+	defer tmpfile.Close()
+	path := tmpfile.Name()
+	training.DBCon, err = bolt.Open(path, 0600, nil)
+	if training.CheckQuery(c1) {
+		t.Error("Expected false")
 	}
 }

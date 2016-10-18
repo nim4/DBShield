@@ -60,7 +60,7 @@ func CheckQuery(context sql.QueryContext) bool {
 	if err := DBCon.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("queries"))
 		if b == nil {
-			panic(errors.New("Bucket not found"))
+			return errors.New("Bucket not found")
 		}
 		v := b.Get(pattern)
 		if v != nil {
@@ -112,7 +112,7 @@ func recordPattern(pattern []byte) error {
 	return DBCon.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("abnormal"))
 		if b == nil {
-			panic(errors.New("Bucket not found"))
+			return errors.New("Bucket not found")
 		}
 		id, _ := b.NextSequence()
 		key := make([]byte, 8)

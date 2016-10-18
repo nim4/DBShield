@@ -95,7 +95,7 @@ func TestAPIHandler(t *testing.T) {
 	setSession(w)
 	r.Header.Set("Cookie", w.HeaderMap.Get("Set-Cookie"))
 	apiHandler(w, r)
-	body, err = ioutil.ReadAll(w.Body)
+	body, _ = ioutil.ReadAll(w.Body)
 	var j struct {
 		Total    int
 		Abnormal int
@@ -109,6 +109,38 @@ func TestAPIHandler(t *testing.T) {
 	}
 	if j.Total != 0 || j.Abnormal != 0 {
 		t.Error("Expected 0 got", j)
+	}
+
+	tmpCon := training.DBCon
+	defer func() {
+		training.DBCon = tmpCon
+	}()
+	tmpfile, err := ioutil.TempFile("", "testdb")
+	if err != nil {
+		panic(err)
+	}
+	defer tmpfile.Close()
+	path := tmpfile.Name()
+	training.DBCon, err = bolt.Open(path, 0600, nil)
+	apiHandler(w, r)
+	body, err = ioutil.ReadAll(w.Body)
+	err = json.Unmarshal(body, &j)
+	if err == nil {
+		t.Error("Expected error")
+	}
+
+	//Just create queries
+	if err = training.DBCon.Update(func(tx *bolt.Tx) error {
+		_, err = tx.CreateBucketIfNotExists([]byte("queries"))
+		return err
+	}); err != nil {
+		panic(err)
+	}
+	apiHandler(w, r)
+	body, err = ioutil.ReadAll(w.Body)
+	err = json.Unmarshal(body, &j)
+	if err == nil {
+		t.Error("Expected error")
 	}
 }
 

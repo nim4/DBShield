@@ -74,7 +74,12 @@ func strConfigDefualt(key, defaultValue string) (ret string) {
 
 func intConfig(key string, defaultValue, min uint) (ret uint, err error) {
 	if viper.IsSet(key) {
-		ret = uint(viper.GetInt(key))
+		tmp := viper.GetInt(key)
+		if tmp < 0 {
+			err = fmt.Errorf("Invalid '%s' cofiguration: %v\n", key, tmp)
+			return
+		}
+		ret = uint(tmp)
 		if ret < min {
 			err = fmt.Errorf("Invalid '%s' cofiguration: %v\n", key, ret)
 			return
@@ -200,8 +205,8 @@ func configHTTP() error {
 //ParseConfig and return error if its not valid
 func ParseConfig(configFile string) error {
 	viper.SetConfigFile(configFile)
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
+	err := viper.ReadInConfig() // Read the config file
+	if err != nil {
 		return fmt.Errorf("Fatal error - config file: %s \n", err)
 	}
 	err = configGeneral()
