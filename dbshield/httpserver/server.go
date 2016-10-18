@@ -20,7 +20,7 @@ var cookieHandler = securecookie.New(
 )
 
 //Serve HTTPS
-func Serve() {
+func Serve() error {
 	http.Handle("/js/", http.FileServer(http.Dir("assets")))
 	http.Handle("/css/", http.FileServer(http.Dir("assets")))
 
@@ -30,7 +30,7 @@ func Serve() {
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	logger.Infof("Web interface on https://%s/", config.Config.HTTPAddr)
-	http.ListenAndServeTLS(config.Config.HTTPAddr, config.Config.TLSCertificate, config.Config.TLSPrivateKey, nil)
+	return http.ListenAndServeTLS(config.Config.HTTPAddr, config.Config.TLSCertificate, config.Config.TLSPrivateKey, nil)
 }
 
 //mainHandler for html
@@ -55,7 +55,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		var contextArray []sql.QueryContext
 		b := tx.Bucket([]byte("queries"))
 		if b == nil {
-			panic(errors.New("Bucket not found"))
+			return errors.New("Bucket not found")
 		}
 		return b.ForEach(func(k []byte, v []byte) error {
 			if err := json.Unmarshal(v, &contextArray); err != nil {
@@ -72,7 +72,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	if err := training.DBCon.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("abnormal"))
 		if b == nil {
-			panic(errors.New("Bucket not found"))
+			return errors.New("Bucket not found")
 		}
 		abnormal = b.Stats().KeyN
 		return nil

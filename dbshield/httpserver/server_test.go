@@ -2,6 +2,8 @@ package httpserver
 
 import (
 	"bytes"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -9,11 +11,42 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/boltdb/bolt"
 	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/training"
 )
 
 func TestMain(t *testing.T) {
+	config.Config.HTTPAddr = ":0"
 	config.Config.HTTPPassword = "foo"
+
+	tmpfile, err := ioutil.TempFile("", "testdb")
+	if err != nil {
+		panic(err)
+	}
+	defer tmpfile.Close()
+	path := tmpfile.Name()
+	training.DBCon, err = bolt.Open(path, 0600, nil)
+	if err != nil {
+		panic(err)
+	}
+	if err := training.DBCon.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte("queries"))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucketIfNotExists([]byte("abnormal"))
+		return err
+	}); err != nil {
+		panic(err)
+	}
+}
+
+func TestServe(t *testing.T) {
+	err := Serve()
+	if err == nil {
+		t.Error("Expected error")
+	}
 }
 
 func TestMainHandler(t *testing.T) {
@@ -28,6 +61,51 @@ func TestMainHandler(t *testing.T) {
 
 	if w.Code != 200 {
 		t.Error("Expected 200 got ", w.Code)
+	}
+
+	r, err = http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
+	w = httptest.NewRecorder()
+	setSession(w)
+	r.Header.Set("Cookie", w.HeaderMap.Get("Set-Cookie"))
+	mainHandler(w, r)
+	body, err := ioutil.ReadAll(w.Body)
+	if strings.Index(string(body), "\"Logout\"") == -1 {
+		t.Error("Expected report page")
+	}
+}
+
+func TestAPIHandler(t *testing.T) {
+	defer recover()
+	r, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
+	w := httptest.NewRecorder()
+	apiHandler(w, r)
+	body, err := ioutil.ReadAll(w.Body)
+	if len(body) != 0 {
+		t.Error("Expected 0 length got", len(body))
+	}
+	setSession(w)
+	r.Header.Set("Cookie", w.HeaderMap.Get("Set-Cookie"))
+	apiHandler(w, r)
+	body, err = ioutil.ReadAll(w.Body)
+	var j struct {
+		Total    int
+		Abnormal int
+	}
+	j.Total = 1
+	j.Abnormal = 1
+
+	err = json.Unmarshal(body, &j)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
+	if j.Total != 0 || j.Abnormal != 0 {
+		t.Error("Expected 0 got", j)
 	}
 }
 
@@ -92,10 +170,6 @@ func TestCheckLogin(t *testing.T) {
 		t.Error("Got an error ", err)
 	}
 
-	if checkLogin(r) {
-		t.Error("Expected false got true")
-	}
-
 	cookie := &http.Cookie{
 		Name:     "session",
 		Value:    "XYZ",
@@ -106,6 +180,18 @@ func TestCheckLogin(t *testing.T) {
 	r.AddCookie(cookie)
 	if checkLogin(r) {
 		t.Error("Expected false got true")
+	}
+
+	r, err = http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
+	w := httptest.NewRecorder()
+	setSession(w)
+	r.Header.Set("Cookie", w.HeaderMap.Get("Set-Cookie"))
+
+	if !checkLogin(r) {
+		t.Error("Expected true got false")
 	}
 }
 

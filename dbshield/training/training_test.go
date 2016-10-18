@@ -10,13 +10,13 @@ import (
 	"github.com/nim4/DBShield/dbshield/training"
 )
 
-func initTempDB() {
+func TestMain(t *testing.T) {
 	tmpfile, err := ioutil.TempFile("", "testdb")
 	if err != nil {
 		panic(err)
 	}
+	defer tmpfile.Close()
 	path := tmpfile.Name()
-	tmpfile.Close()
 	training.DBCon, err = bolt.Open(path, 0600, nil)
 	if err != nil {
 		panic(err)
@@ -35,7 +35,6 @@ func initTempDB() {
 
 func TestAddToTrainingSet(t *testing.T) {
 	var err error
-	initTempDB()
 	c := sql.QueryContext{
 		Query:    "select * from test;",
 		Database: "test",
@@ -50,20 +49,25 @@ func TestAddToTrainingSet(t *testing.T) {
 }
 
 func TestCheckQuery(t *testing.T) {
-	var err error
-	initTempDB()
-	c := sql.QueryContext{
+	c1 := sql.QueryContext{
 		Query:    "select * from test;",
 		Database: "test",
 		User:     "test",
 		Client:   "127.0.0.1",
 		Time:     time.Now().Unix(),
 	}
-	if training.CheckQuery(c) {
-		t.Error("Not Expected error", err)
+	c2 := sql.QueryContext{
+		Query:    "select * from user;",
+		Database: "test",
+		User:     "test",
+		Client:   "127.0.0.1",
+		Time:     time.Now().Unix(),
 	}
-	training.AddToTrainingSet(c)
-	if !training.CheckQuery(c) {
-		t.Error("Not Expected error", err)
+	training.AddToTrainingSet(c1)
+	if !training.CheckQuery(c1) {
+		t.Error("Expected false")
+	}
+	if training.CheckQuery(c2) {
+		t.Error("Expected true")
 	}
 }
