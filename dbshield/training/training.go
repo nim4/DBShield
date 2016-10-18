@@ -100,22 +100,26 @@ func CheckQuery(context sql.QueryContext) bool {
 	}); err != nil {
 		logger.Warning(err)
 		//Record abnormal
-		if err = DBCon.Update(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte("abnormal"))
-			if b == nil {
-				panic(errors.New("Bucket not found"))
-			}
-			id, _ := b.NextSequence()
-			key := make([]byte, 8)
-			binary.BigEndian.PutUint64(key, id)
-			if er := b.Put(key, pattern); er != nil {
-				return er
-			}
-			return nil
-		}); err != nil {
+		if err = recordPattern(pattern); err != nil {
 			logger.Warning(err)
 		}
 		return false
 	}
 	return true
+}
+
+func recordPattern(pattern []byte) error {
+	return DBCon.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("abnormal"))
+		if b == nil {
+			panic(errors.New("Bucket not found"))
+		}
+		id, _ := b.NextSequence()
+		key := make([]byte, 8)
+		binary.BigEndian.PutUint64(key, id)
+		if err := b.Put(key, pattern); err != nil {
+			return err
+		}
+		return nil
+	})
 }
