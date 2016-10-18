@@ -103,15 +103,15 @@ func TestConfigGeneral(t *testing.T) {
 		t.Error("Expected error")
 	}
 	viper.Set("targetPort", 0)
-
-	viper.Set("targetIP", nil)
-	err = configGeneral()
-	if err == nil {
-		t.Error("Expected error")
-	}
-	viper.Set("targetIP", "127.0.0.1")
-
 	/*
+		viper.Set("targetIP", nil)
+		err = configGeneral()
+		if err == nil {
+			t.Error("Expected error")
+		}
+		viper.Set("targetIP", "127.0.0.1")
+
+
 		viper.Set("tlsPrivateKey", nil)
 		err = configGeneral()
 		if err == nil {
