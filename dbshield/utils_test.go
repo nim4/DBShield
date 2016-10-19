@@ -1,9 +1,7 @@
 package dbshield
 
 import (
-	"net"
 	"os"
-	"strconv"
 	"testing"
 	"time"
 
@@ -67,22 +65,8 @@ func TestInitSignal(t *testing.T) {
 }
 
 func TestHandleClient(t *testing.T) {
-	serverAddr, _ := net.ResolveTCPAddr("tcp", config.Config.TargetIP+":"+strconv.Itoa(int(config.Config.TargetPort)))
 	var s mock.ConnMock
-	err := handleClient(s, serverAddr)
-	if err != nil {
-		t.Error("Expected nil got error", err)
-	}
-
-	err = handleClient(s, nil)
-	if err == nil {
-		t.Error("Expected error got nil")
-	}
-
-	mock.ReturnError(true)
-	defer mock.ReturnError(false)
-
-	err = handleClient(s, serverAddr)
+	err := handleClient(s, nil)
 	if err == nil {
 		t.Error("Expected error got nil")
 	}
