@@ -35,7 +35,7 @@ func processContext(context sql.QueryContext) (err error) {
 	logger.Infof("Query: %s", context.Query)
 
 	if config.Config.Learning {
-		go training.AddToTrainingSet(context)
+		training.AddToTrainingSet(context)
 	} else {
 		if config.Config.ActionFunc != nil && !training.CheckQuery(context) {
 			return config.Config.ActionFunc()

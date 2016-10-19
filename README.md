@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/nim4/DBShield/branch/master/graph/badge.svg)](https://codecov.io/gh/nim4/DBShield)
 [![Dev chat](https://img.shields.io/badge/gitter-chat-20cc20.svg "Dev chat")](https://gitter.im/DBShield/Lobby)
 [![GoDoc](https://godoc.org/github.com/nim4/DBShield?status.svg)](https://godoc.org/github.com/nim4/DBShield)
-
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nim4/DBShield/master/LICENSE)
 # DBShield
 
 Protects your data by inspecting incoming queries from your application server and rejecting abnormal ones.
