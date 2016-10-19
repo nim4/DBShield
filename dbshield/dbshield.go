@@ -77,10 +77,6 @@ func Start(configFile string) (err error) {
 		config.Config.TargetPort)
 	logger.Infof("Protect: %v", !config.Config.Learning)
 
-	if config.Config.HTTP {
-		go httpserver.Serve()
-	}
-
 	serverAddr, err := net.ResolveTCPAddr("tcp", config.Config.TargetIP+":"+strconv.Itoa(int(config.Config.TargetPort)))
 	if err != nil {
 		return
@@ -91,6 +87,10 @@ func Start(configFile string) (err error) {
 	}
 	// Close the listener when the application closes.
 	defer l.Close()
+
+	if config.Config.HTTP {
+		go httpserver.Serve()
+	}
 	for {
 		var listenConn net.Conn
 		// Listen for an incoming connection.
