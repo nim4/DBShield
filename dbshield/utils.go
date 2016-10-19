@@ -21,40 +21,39 @@ func initModel() {
 	var err error
 	path := path.Join(config.Config.DBDir, config.Config.TargetIP+"_"+config.Config.DBType+".db")
 	logger.Infof("Internal DB: %s", path)
-	training.DBCon, err = bolt.Open(path, 0600, nil)
+	training.DBCon, err = bolt.Open(path, 0600, &bolt.Options{
+		Timeout:    5,
+		NoGrowSync: false,
+	})
 	if err != nil {
 		panic(err)
 	}
 
-	if err := training.DBCon.Update(func(tx *bolt.Tx) error {
+	training.DBCon.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("queries"))
 		if err != nil {
 			return err
 		}
 		_, err = tx.CreateBucketIfNotExists([]byte("abnormal"))
 		return err
-	}); err != nil {
-		panic(err)
-	}
+	})
 }
 
 //catching Interrupts
 func initSignal() {
-	term := make(chan os.Signal, 1)
+	term := make(chan os.Signal)
 	signal.Notify(term, os.Interrupt)
 	go func() {
-		for {
-			<-term
-			logger.Info("Shutting down...")
-			//Closing open handler politely
-			if training.DBCon != nil {
-				training.DBCon.Close()
-			}
-			if logger.Output != nil {
-				logger.Output.Close()
-			}
-			os.Exit(0)
+		<-term
+		logger.Info("Shutting down...")
+		//Closing open handler politely
+		if training.DBCon != nil {
+			training.DBCon.Close()
 		}
+		if logger.Output != nil {
+			logger.Output.Close()
+		}
+		os.Exit(0)
 	}()
 }
 

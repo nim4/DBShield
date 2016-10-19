@@ -56,14 +56,11 @@ var yValues = {
 
 //Return diff of last Two Queries
 function yQueries() {
-  console.log(yValues["Total"] - yValuesOld["Total"])
   return yValues["Total"] - yValuesOld["Total"];
 }
 
 //Return diff of last Two Abnormals
 function yAbnormal() {
-  console.log("X")
-  console.log(yValues["Abnormal"] - yValuesOld["Abnormal"])
   return yValues["Abnormal"] - yValuesOld["Abnormal"];
 }
 
@@ -113,6 +110,12 @@ function ajax(init) {
       }
     }
   };
+  xhttp.onerror = function() {
+    yValues = {
+      Total: 0,
+      Abnormal: 0
+    }
+  }
   xhttp.open("GET", '/api?_=' + new Date().getTime(), true);
   xhttp.send();
 }

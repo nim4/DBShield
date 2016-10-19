@@ -1,19 +1,34 @@
-package dbshield_test
+package dbshield
 
 import (
+	"os"
 	"testing"
-
-	"github.com/nim4/DBShield/dbshield"
 )
 
 func TestCheck(t *testing.T) {
-	err := dbshield.Check("../conf/dbshield.yml")
+	err := Check("../conf/dbshield.yml")
 	if err != nil {
 		t.Error("Got error", err)
 	}
 
-	err = dbshield.Check("../conf/XYZ.yml")
+	err = Check("Invalid.yml")
 	if err == nil {
 		t.Error("Expected error")
+	}
+}
+
+func TestStart(t *testing.T) {
+	err := Start("Invalid.yml")
+	if err == nil {
+		t.Error("Expected error")
+	}
+}
+
+func TestPostConfig(t *testing.T) {
+	os.Chdir("../")
+	Check("conf/dbshield.yml")
+	err := postConfig()
+	if err != nil {
+		t.Error("Got error", err)
 	}
 }

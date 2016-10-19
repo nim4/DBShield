@@ -13,7 +13,6 @@ import (
 	"github.com/nim4/DBShield/dbshield/dbms"
 	"github.com/nim4/DBShield/dbshield/httpserver"
 	"github.com/nim4/DBShield/dbshield/logger"
-	"github.com/nim4/DBShield/dbshield/utils"
 )
 
 //Version of the library
@@ -33,12 +32,7 @@ func Check(configFile string) error {
 	return nil
 }
 
-//Start the proxy
-func Start(configFile string) (err error) {
-	err = config.ParseConfig(configFile)
-	if err != nil {
-		return
-	}
+func postConfig() (err error) {
 	config.Config.DB, err = dbNameToStruct(config.Config.DBType)
 	if err != nil {
 		return err
@@ -51,27 +45,29 @@ func Start(configFile string) (err error) {
 		config.Config.TargetPort = config.Config.DB.DefaultPort()
 	}
 
-	initLogging()
-	logger.Infof("Config file: %s", configFile)
-
-	initModel()
-	initSignal()
-
-	serverAddr, err := net.ResolveTCPAddr("tcp", config.Config.TargetIP+":"+strconv.Itoa(int(config.Config.TargetPort)))
-	if err != nil {
-		return
-	}
-
 	err = config.Config.DB.SetCertificate(config.Config.TLSCertificate, config.Config.TLSPrivateKey)
 	if err != nil {
 		return
 	}
+	return
+}
 
-	l, err := net.Listen("tcp", config.Config.ListenIP+":"+strconv.Itoa(int(config.Config.ListenPort)))
+//Start the proxy
+func Start(configFile string) (err error) {
+	err = config.ParseConfig(configFile)
 	if err != nil {
 		return
 	}
 
+	err = postConfig()
+	if err != nil {
+		return err
+	}
+	initLogging()
+	initModel()
+	initSignal()
+
+	logger.Infof("Config file: %s", configFile)
 	logger.Infof("Listening: %s:%v (Threads: %v)",
 		config.Config.ListenIP,
 		config.Config.ListenPort,
@@ -86,20 +82,14 @@ func Start(configFile string) (err error) {
 		go httpserver.Serve()
 	}
 
-	tasks := make(chan utils.DBMS, 100)
-	results := make(chan error, 100)
-
-	for id := uint(0); id < config.Config.Threads; id++ {
-		go worker(tasks, results)
+	serverAddr, err := net.ResolveTCPAddr("tcp", config.Config.TargetIP+":"+strconv.Itoa(int(config.Config.TargetPort)))
+	if err != nil {
+		return
 	}
-	go func() {
-		for {
-			e := <-results
-			if e != nil {
-				logger.Warning(e)
-			}
-		}
-	}()
+	l, err := net.Listen("tcp", config.Config.ListenIP+":"+strconv.Itoa(int(config.Config.ListenPort)))
+	if err != nil {
+		return
+	}
 	// Close the listener when the application closes.
 	defer l.Close()
 	for {
@@ -111,10 +101,9 @@ func Start(configFile string) (err error) {
 		}
 
 		go func() {
-			var serverConn net.Conn
 			db := config.Config.DB
 			logger.Infof("Connected from: %s", listenConn.RemoteAddr())
-			serverConn, err = net.DialTCP("tcp", nil, serverAddr)
+			serverConn, err := net.DialTCP("tcp", nil, serverAddr)
 			if err != nil {
 				logger.Warning(err)
 				listenConn.Close()
@@ -123,7 +112,11 @@ func Start(configFile string) (err error) {
 			logger.Infof("Connected to: %s", serverConn.RemoteAddr())
 			db.SetSockets(listenConn, serverConn)
 			db.SetReader(dbms.ReadPacket)
-			tasks <- db
+			e := db.Handler()
+			if e != nil {
+				logger.Warning(e)
+			}
+			db.Close()
 		}()
 	}
 }
