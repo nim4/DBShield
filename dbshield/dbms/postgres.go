@@ -131,25 +131,7 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 	}
 
 	if ssl {
-		logger.Info("SSL connection")
-		tlsConnClient := tls.Server(p.client, &tls.Config{
-			Certificates:       []tls.Certificate{p.certificate},
-			InsecureSkipVerify: true,
-		})
-		if err = tlsConnClient.Handshake(); err != nil {
-			return
-		}
-		p.client = tlsConnClient
-		logger.Debug("Client handshake done")
-
-		tlsConnServer := tls.Client(p.server, &tls.Config{
-			InsecureSkipVerify: true,
-		})
-		if err = tlsConnServer.Handshake(); err != nil {
-			return
-		}
-		p.server = tlsConnServer
-		logger.Debug("Server handshake done")
+		p.client, p.server, err = turnSSL(p.client, p.server, p.certificate)
 	}
 
 	//Receive username and database name

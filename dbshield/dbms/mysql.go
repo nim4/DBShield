@@ -155,32 +155,14 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 		return
 	}
 	if ssl {
-		logger.Info("SSL connection")
-		tlsConnClient := tls.Server(m.client, &tls.Config{
-			Certificates:       []tls.Certificate{m.certificate},
-			InsecureSkipVerify: true,
-		})
-		if err = tlsConnClient.Handshake(); err != nil {
-			return
-		}
-		m.client = tlsConnClient
-		logger.Debug("Client handshake done")
+		m.client, m.server, err = turnSSL(m.client, m.server, m.certificate)
 
-		//Read TLS Hello
 		buf, err = m.reader(m.client)
 		if err != nil {
 			return
 		}
 		data = buf[4:]
 		m.username, _, m.currentDB = getUsernameHashDB(data)
-		tlsConnServer := tls.Client(m.server, &tls.Config{
-			InsecureSkipVerify: true,
-		})
-		if err = tlsConnServer.Handshake(); err != nil {
-			return
-		}
-		m.server = tlsConnServer
-		logger.Debug("Server handshake done")
 
 		//Send Login Request
 		_, err = m.server.Write(buf)

@@ -117,9 +117,7 @@ func recordPattern(pattern []byte) error {
 		id, _ := b.NextSequence()
 		key := make([]byte, 8)
 		binary.BigEndian.PutUint64(key, id)
-		if err := b.Put(key, pattern); err != nil {
-			return err
-		}
+		b.Put(key, pattern)
 		return nil
 	})
 }

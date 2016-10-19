@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/nim4/DBShield/dbshield/dbms"
+	"github.com/nim4/mock"
 )
 
 var mysqlCount int
@@ -83,7 +84,7 @@ func TestMySQL(t *testing.T) {
 		t.Error("Expected error")
 	}
 	m.SetReader(mysqlDummyReader)
-	var s mockConn
+	var s mock.ConnMock
 	m.SetSockets(s, s)
 	err = m.Handler()
 	if err != nil {

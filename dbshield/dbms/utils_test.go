@@ -1,8 +1,11 @@
 package dbms
 
 import (
+	"crypto/tls"
 	"net"
 	"testing"
+
+	"github.com/nim4/mock"
 )
 
 func TestPascalString(t *testing.T) {
@@ -33,4 +36,19 @@ func TestThreeByteBigEndianToInt(t *testing.T) {
 func TestHandlePanic(t *testing.T) {
 	defer handlePanic()
 	panic("")
+}
+
+func TestTurnSSL(t *testing.T) {
+	cert, err := tls.LoadX509KeyPair("../../cert/server-cert.pem", "../../cert/server-key.pem")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock.ReturnError(true)
+	defer mock.ReturnError(false)
+	var s mock.ConnMock
+	_, _, err = turnSSL(s, s, cert)
+	if err == nil {
+		t.Error("Expected error")
+	}
 }

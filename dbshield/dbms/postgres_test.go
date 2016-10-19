@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/nim4/DBShield/dbshield/dbms"
+	"github.com/nim4/mock"
 )
 
 var postgresCount int
@@ -75,7 +76,7 @@ func TestPostgres(t *testing.T) {
 		t.Error("Expected error")
 	}
 	p.SetReader(postgresDummyReader)
-	var s mockConn
+	var s mock.ConnMock
 	p.SetSockets(s, s)
 	err = p.Handler()
 	if err != nil {

@@ -1,6 +1,7 @@
 package dbms
 
 import (
+	"crypto/tls"
 	"net"
 
 	"github.com/nim4/DBShield/dbshield/config"
@@ -41,4 +42,25 @@ func processContext(context sql.QueryContext) (err error) {
 		}
 	}
 	return nil
+}
+
+func turnSSL(client net.Conn, server net.Conn, certificate tls.Certificate) (net.Conn, net.Conn, error) {
+	logger.Info("SSL connection")
+	tlsConnClient := tls.Server(client, &tls.Config{
+		Certificates:       []tls.Certificate{certificate},
+		InsecureSkipVerify: true,
+	})
+	if err := tlsConnClient.Handshake(); err != nil {
+		return nil, nil, err
+	}
+	logger.Debug("Client handshake done")
+
+	tlsConnServer := tls.Client(server, &tls.Config{
+		InsecureSkipVerify: true,
+	})
+	if err := tlsConnServer.Handshake(); err != nil {
+		return nil, nil, err
+	}
+	logger.Debug("Server handshake done")
+	return tlsConnClient, tlsConnServer, nil
 }

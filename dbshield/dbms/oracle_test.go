@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/nim4/DBShield/dbshield/dbms"
+	"github.com/nim4/mock"
 )
 
 var oracleCount int
@@ -919,7 +920,7 @@ func TestOracle(t *testing.T) {
 		t.Error("Expected error")
 	}
 	o.SetReader(oracleDummyReader)
-	var s mockConn
+	var s mock.ConnMock
 	o.SetSockets(s, s)
 	err = o.Handler()
 	if err != nil {
