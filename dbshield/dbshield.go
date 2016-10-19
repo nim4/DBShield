@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/nim4/DBShield/dbshield/config"
-	"github.com/nim4/DBShield/dbshield/dbms"
 	"github.com/nim4/DBShield/dbshield/httpserver"
 	"github.com/nim4/DBShield/dbshield/logger"
 )
@@ -100,23 +99,6 @@ func Start(configFile string) (err error) {
 			return
 		}
 
-		go func() {
-			db := config.Config.DB
-			logger.Infof("Connected from: %s", listenConn.RemoteAddr())
-			serverConn, err := net.DialTCP("tcp", nil, serverAddr)
-			if err != nil {
-				logger.Warning(err)
-				listenConn.Close()
-				return
-			}
-			logger.Infof("Connected to: %s", serverConn.RemoteAddr())
-			db.SetSockets(listenConn, serverConn)
-			db.SetReader(dbms.ReadPacket)
-			e := db.Handler()
-			if e != nil {
-				logger.Warning(e)
-			}
-			db.Close()
-		}()
+		go handleClient(listenConn, serverAddr)
 	}
 }

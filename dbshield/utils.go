@@ -3,6 +3,7 @@ package dbshield
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"path"
@@ -88,4 +89,25 @@ func dbNameToStruct(db string) (d utils.DBMS, err error) {
 		err = fmt.Errorf("Unknown DBMS: %s", db)
 	}
 	return
+}
+
+func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
+	db := config.Config.DB
+	logger.Infof("Connected from: %s", listenConn.RemoteAddr())
+	serverConn, err := net.DialTCP("tcp", nil, serverAddr)
+	if err != nil {
+		logger.Warning(err)
+		listenConn.Close()
+		return err
+	}
+	logger.Infof("Connected to: %s", serverConn.RemoteAddr())
+	db.SetSockets(listenConn, serverConn)
+	db.SetReader(dbms.ReadPacket)
+	err = db.Handler()
+	if err != nil {
+		logger.Warning(err)
+		return err
+	}
+	db.Close()
+	return nil
 }
