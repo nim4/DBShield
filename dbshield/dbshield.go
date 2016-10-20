@@ -15,7 +15,7 @@ import (
 )
 
 //Version of the library
-var Version = "1.0-beta"
+var Version = "1.0.0-beta2"
 
 //Check config file and writes it to STDUT
 func Check(configFile string) error {
@@ -67,10 +67,9 @@ func Start(configFile string) (err error) {
 	initSignal()
 
 	logger.Infof("Config file: %s", configFile)
-	logger.Infof("Listening: %s:%v (Threads: %v)",
+	logger.Infof("Listening: %s:%v",
 		config.Config.ListenIP,
-		config.Config.ListenPort,
-		config.Config.Threads)
+		config.Config.ListenPort)
 	logger.Infof("Backend: %s (%s:%v)",
 		config.Config.DBType,
 		config.Config.TargetIP,

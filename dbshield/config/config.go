@@ -30,8 +30,7 @@ var Config struct {
 	DBType string
 	DB     utils.DBMS `json:"-"`
 
-	Threads uint
-	DBDir   string
+	DBDir string
 
 	ListenIP   string
 	ListenPort uint
@@ -104,11 +103,6 @@ func configGeneral() (err error) {
 	} else {
 		logger.Infof("'mode' not configured, assuming: learning")
 		Config.Learning = true
-	}
-
-	Config.Threads, err = intConfig("threads", 4, 1)
-	if err != nil {
-		return err
 	}
 
 	Config.ListenPort, err = intConfig("listenPort", 0, 0)

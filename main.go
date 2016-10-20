@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"log"
-	_ "net/http/pprof"
+	//_ "net/http/pprof"
 	"runtime"
 
 	"github.com/nim4/DBShield/dbshield"

@@ -34,8 +34,8 @@ After collecting enough patterns we can run DBShield in protect mode. Protect mo
 $ go run main.go
 2016/10/15 16:25:31 [INFO]  Config file: /etc/dbshield.yml
 2016/10/15 16:25:31 [INFO]  Internal DB: /tmp/model/127.0.0.1_postgres.db
-2016/10/15 16:25:31 [INFO]  Listening: 0.0.0.0:5000 (Threads: 5)
-2016/10/15 16:25:31 [INFO]  Backend: postgres 10.0.0.21:5432)
+2016/10/15 16:25:31 [INFO]  Listening: 0.0.0.0:5000
+2016/10/15 16:25:31 [INFO]  Backend: postgres (10.0.0.21:5432)
 2016/10/15 16:25:31 [INFO]  Protect: true
 2016/10/15 16:25:31 [INFO]  Web interface on https://127.0.0.1:8070/
 2016/10/15 16:25:33 [INFO]  Connected from: 10.0.0.20:35910
@@ -54,6 +54,75 @@ $ go run main.go
 **Web Interface**
 
 ![Web UI](https://raw.githubusercontent.com/nim4/DBShield/master/misc/graph.png)
+
+
+## Demo
+
+For testing we have a vulnerable page at `http://192.168.22.1/user.php`
+
+`user.php` contents:
+```
+// Create connection
+$conn = new mysqli($servername, $username, $password, "test");
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+if (!empty($_GET['id'])){
+  if ($result = $conn->query("SELECT * FROM Persons WHERE id=".$_GET['id'])) {
+    foreach($result as $k => $v){
+      echo "Name: <b>{$v['Name']}</b><br />City: <b>{$v['City']}</b>" ;
+    }
+    mysqli_free_result($result);
+  }
+ }
+$conn->close();
+```
+
+We are using [sqlmap](https://github.com/sqlmapproject/sqlmap) for exploiting the vulnerability, result are as below:
+
+```
+$ sqlmap -u http://192.168.22.1/user.php?id=1
+```
+```
+[12:14:31] [INFO] GET parameter 'id' is 'Generic UNION query (NULL) - 1 to 20 columns' injectable
+GET parameter 'id' is vulnerable. Do you want to keep testing the others (if any)? [y/N]
+sqlmap identified the following injection point(s) with a total of 53 HTTP(s) requests:
+---
+Parameter: id (GET)
+    Type: boolean-based blind
+    Title: AND boolean-based blind - WHERE or HAVING clause
+    Payload: id=1 AND 8909=8909
+
+    Type: AND/OR time-based blind
+    Title: MySQL >= 5.0.12 AND time-based blind (SELECT)
+    Payload: id=1 AND (SELECT * FROM (SELECT(SLEEP(5)))eIyW)
+
+    Type: UNION query
+    Title: Generic UNION query (NULL) - 3 columns
+    Payload: id=1 UNION ALL SELECT NULL,NULL,CONCAT(0x71786b7071,0x64666b56715965797a6e654141634c765a6575674b79686461476c5556766671584f74486c5a5a58,0x717a717a71)-- -
+---
+[12:14:33] [INFO] the back-end DBMS is MySQL
+web server operating system: Linux Ubuntu
+web application technology: PHP 7.0.8
+back-end DBMS: MySQL 5.0.12
+```
+
+Then we try to exploiting it again using the same tool, this time DBShield is protecting the database:
+
+```
+$ sqlmap -u http://192.168.22.1/user.php?id=1
+```
+
+```
+[12:20:36] [INFO] testing 'Oracle AND time-based blind'
+[12:20:37] [INFO] testing 'Generic UNION query (NULL) - 1 to 10 columns'
+[12:20:37] [WARNING] using unescaped version of the test because of zero knowledge of the back-end DBMS. You can try to explicitly set it using option '--dbms'
+[12:20:43] [INFO] testing 'MySQL UNION query (NULL) - 1 to 10 columns'
+[12:20:47] [WARNING] GET parameter 'id' is not injectable
+```
 
 ## Installation
 

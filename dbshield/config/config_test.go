@@ -89,13 +89,6 @@ func TestConfigGeneral(t *testing.T) {
 	}
 	viper.Set("mode", "learning")
 
-	viper.Set("threads", "Invalid")
-	err = configGeneral()
-	if err == nil {
-		t.Error("Expected error")
-	}
-	viper.Set("threads", 4)
-
 	viper.Set("listenPort", -1)
 	err = configGeneral()
 	if err == nil {

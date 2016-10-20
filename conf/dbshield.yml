@@ -8,8 +8,6 @@
 #       protect - take action against abnormal queries
 mode: learning
 
-# Thread pool size(default: 4)
-threads: 4
 # Directory to save internal database(default: in model directory under OS's temp directory)
 dbDir: "/tmp/model/"
 # DBMS type(default: mysql)
