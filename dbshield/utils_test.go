@@ -37,11 +37,7 @@ func TestDbNameToStruct(t *testing.T) {
 		t.Error("Expected struct, got ", err)
 		return
 	}
-	_, err = dbNameToStruct("invalid")
-	if err == nil {
-		t.Error("Expected error")
-		return
-	}
+	//Invalid case is tested in postConfig test
 }
 
 func TestInitLogging(t *testing.T) {

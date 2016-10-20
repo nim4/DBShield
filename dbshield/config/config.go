@@ -18,8 +18,8 @@ type mask struct {
 	PaddingCharacter []byte
 }
 
-//Config holds current configurations
-var Config struct {
+//Configurations structure to hold user configurations
+type Configurations struct {
 	Learning    bool
 	CheckUser   bool
 	CheckSource bool
@@ -51,6 +51,9 @@ var Config struct {
 	//Key-> database.table.column
 	//Masks map[string]mask
 }
+
+//Config holds current configs
+var Config Configurations
 
 func strConfig(key string) (ret string, err error) {
 	if viper.IsSet(key) {
@@ -197,6 +200,7 @@ func configHTTP() error {
 
 //ParseConfig and return error if its not valid
 func ParseConfig(configFile string) error {
+	Config = Configurations{} // Reset configs
 	viper.SetConfigFile(configFile)
 	err := viper.ReadInConfig() // Read the config file
 	if err != nil {

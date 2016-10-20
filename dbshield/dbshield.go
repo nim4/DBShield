@@ -5,29 +5,69 @@ package dbshield
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
 
+	"github.com/boltdb/bolt"
 	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/httpserver"
 	"github.com/nim4/DBShield/dbshield/logger"
+	"github.com/nim4/DBShield/dbshield/sql"
+	"github.com/nim4/DBShield/dbshield/training"
 )
 
 //Version of the library
 var Version = "1.0.0-beta2"
 
-//Check config file and writes it to STDUT
-func Check(configFile string) error {
+var configFile string
+
+//SetConfigFile of DBShield
+func SetConfigFile(cf string) error {
+	configFile = cf
 	err := config.ParseConfig(configFile)
 	if err != nil {
 		return err
 	}
+	return postConfig()
+}
+
+//Check config file and writes it to STDUT
+func Check() error {
 	confJSON, err := json.MarshalIndent(config.Config, "", "    ")
 	if err != nil {
 		return err
 	}
 	fmt.Println(string(confJSON))
+	return nil
+}
+
+//Patterns lists the captured patterns
+func Patterns() error {
+	initModel()
+	if err := training.DBCon.View(func(tx *bolt.Tx) error {
+		var contextArray []sql.QueryContext
+		b := tx.Bucket([]byte("queries"))
+		if b == nil {
+			return errors.New("Bucket not found")
+		}
+		return b.ForEach(func(k []byte, v []byte) error {
+			if err := json.Unmarshal(v, &contextArray); err != nil {
+				return err
+			}
+			fmt.Printf(
+				`Pattern:     0x%x
+Sample query: %s
+-----------------
+`,
+				k,
+				contextArray[0].Query)
+			return nil
+		})
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -52,20 +92,10 @@ func postConfig() (err error) {
 }
 
 //Start the proxy
-func Start(configFile string) (err error) {
-	err = config.ParseConfig(configFile)
-	if err != nil {
-		return
-	}
-
-	err = postConfig()
-	if err != nil {
-		return err
-	}
-	initLogging()
+func Start() (err error) {
 	initModel()
+	initLogging()
 	initSignal()
-
 	logger.Infof("Config file: %s", configFile)
 	logger.Infof("Listening: %s:%v",
 		config.Config.ListenIP,

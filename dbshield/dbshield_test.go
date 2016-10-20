@@ -7,31 +7,56 @@ import (
 	"testing"
 
 	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/training"
 )
 
 func TestMain(t *testing.T) {
 	os.Chdir("../")
 }
 
-func TestCheck(t *testing.T) {
-	err := Check("conf/dbshield.yml")
+func TestSetConfigFile(t *testing.T) {
+	err := SetConfigFile("Invalid.yml")
+	if err == nil {
+		t.Error("Expected error")
+	}
+}
+
+func TestPatterns(t *testing.T) {
+	if training.DBCon != nil {
+		training.DBCon.Close()
+	}
+	err := SetConfigFile("conf/dbshield.yml")
 	if err != nil {
 		t.Error("Got error", err)
 	}
+	err = Patterns()
+	if err != nil {
+		t.Error("Got error", err)
+	}
+}
 
-	err = Check("Invalid.yml")
+func TestCheck(t *testing.T) {
+	SetConfigFile("conf/dbshield.yml")
+	err := Check()
+	if err != nil {
+		t.Error("Got error", err)
+	}
+}
+
+func TestPostConfig(t *testing.T) {
+	SetConfigFile("conf/dbshield.yml")
+	config.Config.DBType = "Invalid"
+	err := postConfig()
 	if err == nil {
 		t.Error("Expected error")
 	}
 }
 
 func TestStart(t *testing.T) {
-	err := Start("Invalid.yml")
-	if err == nil {
-		t.Error("Expected error")
+	if training.DBCon != nil {
+		training.DBCon.Close()
 	}
-
-	Check("conf/dbshield.yml")
+	SetConfigFile("conf/dbshield.yml")
 	//It should fail if port is already open
 	l, err := net.Listen("tcp", config.Config.ListenIP+":"+strconv.Itoa(int(config.Config.ListenPort)))
 	if err != nil {
@@ -39,7 +64,13 @@ func TestStart(t *testing.T) {
 	}
 	defer l.Close()
 
-	err = Start("conf/dbshield.yml")
+	err = Start()
+	if err == nil {
+		t.Error("Expected error")
+	}
+
+	config.Config.TargetIP = "in valid"
+	err = Start()
 	if err == nil {
 		t.Error("Expected error")
 	}

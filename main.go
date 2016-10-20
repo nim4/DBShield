@@ -20,6 +20,7 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU()) // For Go < 1.5
 	//Parsing command line arguments
 	config := flag.String("c", "/etc/dbshield.yml", "Config file")
+	listPatterns := flag.Bool("d", false, "Get list of captured patterns")
 	checkConfig := flag.Bool("k", false, "Show parsed config and exit")
 	showVersion := flag.Bool("version", false, "Show version")
 	showHelp := flag.Bool("h", false, "Show help")
@@ -35,12 +36,21 @@ func main() {
 		return
 	}
 
-	if *checkConfig {
-		if err := dbshield.Check(*config); err != nil {
+	dbshield.SetConfigFile(*config)
+
+	if *listPatterns {
+		if err := dbshield.Patterns(); err != nil {
 			log.Println(err)
 		}
 		return
 	}
 
-	log.Println(dbshield.Start(*config))
+	if *checkConfig {
+		if err := dbshield.Check(); err != nil {
+			log.Println(err)
+		}
+		return
+	}
+
+	log.Println(dbshield.Start())
 }
