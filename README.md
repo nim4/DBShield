@@ -161,6 +161,7 @@ see [sample configuration  file](https://github.com/nim4/DBShield/blob/master/co
 
 | Database     | Protect | SSL |
 |:------------:|:-------:|:---:|
+| **DB2**   | ![Yes][YesImg] | ![No][NoImg]  |
 | **MariaDB**  | ![Yes][YesImg] | ![Yes][YesImg] |
 | **MySQL**    | ![Yes][YesImg] | ![Yes][YesImg] |
 | **Oracle**   | ![Yes][YesImg] | ![No][NoImg]  |
@@ -174,7 +175,6 @@ see [sample configuration  file](https://github.com/nim4/DBShield/blob/master/co
  - Improve documentation
  - Add Microsoft SQL Server
  - Add more command-line arguments
- - Add IBM DB2
  - Get 90% test coverage
  - Support Oracle SSL
 

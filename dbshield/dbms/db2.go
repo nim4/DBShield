@@ -1,7 +1,9 @@
 package dbms
 
 import (
+	"bytes"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"time"
 
@@ -58,6 +60,7 @@ func (d *DB2) Handler() (err error) {
 		logger.Warning("Login failed")
 		return
 	}
+	end := false
 	for {
 		var buf []byte
 		//Read client request
@@ -65,25 +68,33 @@ func (d *DB2) Handler() (err error) {
 		if err != nil {
 			return
 		}
-		switch buf[0] {
-		case 0x51: //Simple query
-			context := sql.QueryContext{
-				Query:    string(buf[5:]),
-				Database: d.currentDB,
-				User:     d.username,
-				Client:   remoteAddrToIP(d.client.RemoteAddr()),
-				Time:     time.Now().Unix(),
+		for len(buf) > 0 {
+			dr, n := parseDRDA(buf)
+			buf = buf[n:]
+			fmt.Printf("\n0x%x\n", dr.ddm)
+			if dr.ddm[0] == 0xc0 && dr.ddm[1] == 0x04 {
+				//ENDUOWRM (end)
+				fmt.Println("END")
+				end = true
+			} else if dr.ddm[0] == 0x24 && dr.ddm[1] == 0x14 {
+				context := sql.QueryContext{
+					Query:    string(dr.param),
+					Database: d.currentDB,
+					User:     d.username,
+					Client:   remoteAddrToIP(d.client.RemoteAddr()),
+					Time:     time.Now().Unix(),
+				}
+				processContext(context)
 			}
-			processContext(context)
-
-		case 0x58: //Terminate
-			_, err = d.server.Write(buf)
-			return
 		}
 
 		//Send request to server
 		_, err = d.server.Write(buf)
 		if err != nil {
+			return
+		}
+
+		if end {
 			return
 		}
 
@@ -143,5 +154,11 @@ type drda struct {
 func parseDRDA(buf []byte) (dr drda, n int) {
 	n = int(buf[0])*256 + int(buf[1])
 	dr.ddm = buf[8:10]
+	if len(buf) > 15 {
+		nullByteIndex := bytes.IndexByte(buf[15:], 0xff) // 0xff is string terminator
+		if nullByteIndex > 0 {
+			dr.param = buf[15 : nullByteIndex+15]
+		}
+	}
 	return
 }
