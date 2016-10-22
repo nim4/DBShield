@@ -80,7 +80,9 @@ func initLogging() {
 //maps database name to corresponding struct
 func dbNameToStruct(db string) (d utils.DBMS, err error) {
 	switch strings.ToLower(db) {
-	case "mysql":
+	case "db2":
+		d = &dbms.DB2{}
+	case "mysql", "mariadb":
 		d = &dbms.MySQL{}
 	case "oracle":
 		d = &dbms.Oracle{}

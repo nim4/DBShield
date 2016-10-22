@@ -22,7 +22,12 @@ func TestInitModel(t *testing.T) {
 }
 
 func TestDbNameToStruct(t *testing.T) {
-	_, err := dbNameToStruct("mysql")
+	_, err := dbNameToStruct("db2")
+	if err != nil {
+		t.Error("Expected struct, got ", err)
+		return
+	}
+	_, err = dbNameToStruct("mysql")
 	if err != nil {
 		t.Error("Expected struct, got ", err)
 		return
