@@ -1,0 +1,79 @@
+##############################
+### General               ###
+#############################
+
+# Operating mode
+# possible values:
+#       learning - add queries to training set (default)
+#       protect - take action against abnormal queries
+mode: learning
+
+# Directory to save internal database(default: in model directory under OS's temp directory)
+dbDir: "/tmp/model/"
+# DBMS type(default: mysql)
+dbms: mysql
+# IP address to listen on(default: 0.0.0.0)
+listenIP: 0.0.0.0
+# Port number to listen on (0 means dbms default port ex. 3306 for mysql)
+listenPort: 5000
+# IP address of the server
+targetIP: 127.0.0.1
+# Port number of the dbms (0 means dbms default port ex. 3306 for mysql)
+targetPort: 0
+# TLS
+tlsPrivateKey:  cert/server-key.pem
+tlsCertificate: cert/server-cert.pem
+
+#############################
+### HTTP Service          ###
+#############################
+# Run http service(default: on)
+http: on
+
+# IP address to listen on(default: 127.0.0.1)
+httpIP: 127.0.0.1
+
+# Port number to listen on(default: 8070)
+httpPort: 8070
+
+# Password
+httpPassword: ChangeMe
+
+#############################
+### Protect               ###
+#############################
+
+# Action to take against abnormal requests
+# possible values:
+#       drop  - close the connection (default)
+#       pass  - pass the query to server
+action: drop
+
+
+# Properties to check for abnormality
+#
+# possible values: (you can choose more than one - comma separated)
+#       user     - username
+#       source   - request sourece address
+#
+# Note: leave empty to avoid adiditional checks
+additionalChecks:  user,source
+
+
+#############################
+### Logging               ###
+#############################
+
+# Log depth
+# possible values:
+#       0   warning
+#       1   warning + info (default)
+#       2   warning + info + debug
+logLevel: 1
+
+# Log path
+# possible values:
+#       /path/to/file
+#       stdout
+#       stderr (default)
+logPath: stderr

@@ -1,0 +1,16 @@
+language: go
+
+os:
+  - linux
+  - osx
+
+go:
+  - 1.6
+  - tip
+
+script:
+  - go vet ./...
+  - ./test.sh
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

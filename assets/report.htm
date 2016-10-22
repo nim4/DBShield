@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>Realtime Graph | DBShield</title>
+
+    <script src="js/vis.min.js"></script>
+    <link href="css/vis.min.css" rel="stylesheet" type="text/css" />
+    <style>
+        form {
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
+        #lower {
+            text-align: center;
+        }
+
+        input[type=submit] {
+            width: 80px;
+            height: 30px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #acd6ef;
+            /*IE fallback*/
+            background-image: -webkit-gradient(linear, left top, left bottom, from(#acd6ef), to(#6ec2e8));
+            background-image: -moz-linear-gradient(top left 90deg, #acd6ef 0%, #6ec2e8 100%);
+            background-image: linear-gradient(top left 90deg, #acd6ef 0%, #6ec2e8 100%);
+            border-radius: 30px;
+            border: 1px solid #66add6;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .5);
+            cursor: pointer;
+        }
+
+        input[type=submit]:hover {
+            background-image: -webkit-gradient(linear, left top, left bottom, from(#b6e2ff), to(#6ec2e8));
+            background-image: -moz-linear-gradient(top left 90deg, #b6e2ff 0%, #6ec2e8 100%);
+            background-image: linear-gradient(top left 90deg, #b6e2ff 0%, #6ec2e8 100%);
+        }
+
+        input[type=submit]:active {
+            background-image: -webkit-gradient(linear, left top, left bottom, from(#6ec2e8), to(#b6e2ff));
+            background-image: -moz-linear-gradient(top left 90deg, #6ec2e8 0%, #b6e2ff 100%);
+            background-image: linear-gradient(top left 90deg, #6ec2e8 0%, #b6e2ff 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="visualization"></div>
+
+    <script src="js/app.js"></script>
+    <div>
+        <form method="post" action="/logout">
+            <div id="lower">
+                <input type="submit" value="Logout">
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
