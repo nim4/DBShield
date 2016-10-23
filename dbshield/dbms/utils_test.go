@@ -8,6 +8,13 @@ import (
 	"github.com/nim4/mock"
 )
 
+func TestEbc2asc(t *testing.T) {
+	ret := string(ebc2asc([]byte{0xe2, 0xc1}))
+	if ret != "SA" {
+		t.Error("Expected 'SA', got ", ret)
+	}
+}
+
 func TestPascalString(t *testing.T) {
 	str, size := pascalString([]byte{0x3, 0x41, 0x41, 0x41})
 	if size != 3 {
