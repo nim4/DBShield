@@ -3,7 +3,6 @@ package dbms
 import (
 	"bytes"
 	"crypto/tls"
-	"fmt"
 	"net"
 	"time"
 
@@ -51,7 +50,7 @@ func (d *DB2) DefaultPort() uint {
 
 //Handler gets incoming requests
 func (d *DB2) Handler() (err error) {
-	//defer handlePanic()
+	defer handlePanic()
 	success, err := d.handleLogin()
 	if err != nil {
 		return
@@ -71,10 +70,8 @@ func (d *DB2) Handler() (err error) {
 		for len(buf) > 0 {
 			dr, n := parseDRDA(buf)
 			buf = buf[n:]
-			fmt.Printf("\n0x%x\n", dr.ddm)
 			if dr.ddm[0] == 0xc0 && dr.ddm[1] == 0x04 {
 				//ENDUOWRM (end)
-				fmt.Println("END")
 				end = true
 			} else if dr.ddm[0] == 0x24 && dr.ddm[1] == 0x14 {
 				context := sql.QueryContext{
@@ -119,13 +116,24 @@ func (d *DB2) handleLogin() (success bool, err error) {
 	}
 
 	//Receive Auth
-	err = readWrite(d.client, d.server, d.reader)
+	buf, err := d.reader(d.client)
+	if err != nil {
+		return
+	}
+	//Send result
+	_, err = d.server.Write(buf)
 	if err != nil {
 		return
 	}
 
+	//Get database name
+	atByteIndex := bytes.IndexByte(buf[20:], 0x40) // 0x40 = @
+	if atByteIndex > 0 {
+		d.currentDB = string(ebc2asc(buf[20 : 20+atByteIndex]))
+	}
+
 	//Receive result
-	buf, err := d.reader(d.server)
+	buf, err = d.reader(d.server)
 	if err != nil {
 		return
 	}
@@ -143,6 +151,7 @@ func (d *DB2) handleLogin() (success bool, err error) {
 			break
 		}
 	}
+
 	return
 }
 
