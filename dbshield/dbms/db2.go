@@ -50,7 +50,7 @@ func (d *DB2) DefaultPort() uint {
 
 //Handler gets incoming requests
 func (d *DB2) Handler() (err error) {
-	defer handlePanic()
+	//defer handlePanic()
 	success, err := d.handleLogin()
 	if err != nil {
 		return
@@ -127,11 +127,15 @@ func (d *DB2) handleLogin() (success bool, err error) {
 	}
 
 	//Get database name
-	atByteIndex := bytes.IndexByte(buf[20:], 0x40) // 0x40 = @
-	if atByteIndex > 0 {
-		d.currentDB = string(ebc2asc(buf[20 : 20+atByteIndex]))
-	}
-
+	startIndex := bytes.Index(buf, []byte{0x21, 0x10})
+	buf = buf[startIndex+2:]
+	atByteIndex := bytes.IndexByte(buf, 0x40) // 0x40 = @
+	d.currentDB = string(ebc2asc(buf[:atByteIndex]))
+	//Get username
+	startIndex = bytes.Index(buf, []byte{0x11, 0xa0})
+	buf = buf[startIndex+2:]
+	nullByteIndex := bytes.IndexByte(buf, 0x00)
+	d.username = string(ebc2asc(buf[:nullByteIndex]))
 	//Receive result
 	buf, err = d.reader(d.server)
 	if err != nil {
