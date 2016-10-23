@@ -182,8 +182,5 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 	}
 	//Send authtentication result to client
 	_, err = p.client.Write(buf)
-	if err != nil {
-		return
-	}
 	return
 }
