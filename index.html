@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>DBShield by nim4</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>DBShield</h1>
+        <h2>Database firewall</h2>
+        <a href="https://github.com/nim4/DBShield" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <p><a href="https://travis-ci.org/nim4/DBShield"><img src="https://travis-ci.org/nim4/DBShield.svg?branch=master" alt="Linux &amp; OS X" title="Linux &amp; OS X"></a>
+<a href="https://ci.appveyor.com/project/nim4/DBShield/branch/master"><img src="https://ci.appveyor.com/api/projects/status/github/nim4/DBShield?branch=master&amp;svg=true" alt="Windows" title="Windows"></a>
+<a href="https://goreportcard.com/report/github.com/nim4/DBShield"><img src="https://goreportcard.com/badge/github.com/nim4/DBShield" alt="Go Report Card"></a>
+<a href="https://codecov.io/gh/nim4/DBShield"><img src="https://codecov.io/gh/nim4/DBShield/branch/master/graph/badge.svg" alt="codecov"></a>
+<a href="https://gitter.im/DBShield/Lobby"><img src="https://img.shields.io/badge/gitter-chat-20cc20.svg" alt="Dev chat" title="Dev chat"></a>
+<a href="https://godoc.org/github.com/nim4/DBShield"><img src="https://godoc.org/github.com/nim4/DBShield?status.svg" alt="GoDoc"></a>
+<a href="https://raw.githubusercontent.com/nim4/DBShield/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT licensed"></a></p>
+
+<h1>
+<a id="dbshield" class="anchor" href="#dbshield" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>DBShield</h1>
+
+<p>Protects your data by inspecting incoming queries from your application server and rejecting abnormal ones.</p>
+
+<hr>
+
+<h2>
+<a id="how-it-works" class="anchor" href="#how-it-works" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How it works?</h2>
+
+<p>For example, this is how web server normally interacts with database server:</p>
+
+<p><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_01.png" alt="Sample Web Server and DB"></p>
+
+<p>By adding DBShield in front of database server we can protect it against abnormal queries. To detect abnormal queries we first run DBShield in learning mode. Learning mode lets any query pass but it records information about it (pattern, username, time and source) into internal database.</p>
+
+<p><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_02.png" alt="Learning mode"></p>
+
+<p>After collecting enough patterns we can run DBShield in protect mode. Protect mode can distinguish abnormal query pattern, user and source and take action based on configurations.</p>
+
+<p><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_03.png" alt="Protect mode"></p>
+
+<hr>
+
+<h2>
+<a id="sample-outputs" class="anchor" href="#sample-outputs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Sample Outputs</h2>
+
+<p><strong>CLI</strong></p>
+
+<pre><code>$ go run main.go
+2016/10/15 16:25:31 [INFO]  Config file: /etc/dbshield.yml
+2016/10/15 16:25:31 [INFO]  Internal DB: /tmp/model/10.0.0.21_postgres.db
+2016/10/15 16:25:31 [INFO]  Listening: 0.0.0.0:5000
+2016/10/15 16:25:31 [INFO]  Backend: postgres (10.0.0.21:5432)
+2016/10/15 16:25:31 [INFO]  Protect: true
+2016/10/15 16:25:31 [INFO]  Web interface on https://127.0.0.1:8070/
+2016/10/15 16:25:33 [INFO]  Connected from: 10.0.0.20:35910
+2016/10/15 16:25:33 [INFO]  Connected to: 10.0.0.21:5432
+2016/10/15 16:25:33 [INFO]  SSL connection
+2016/10/15 16:25:34 [DEBUG] Client handshake done
+2016/10/15 16:25:34 [DEBUG] Server handshake done
+2016/10/15 16:25:34 [INFO]  User: postgres
+2016/10/15 16:25:34 [INFO]  Database: test
+2016/10/15 16:25:34 [INFO]  Query: SELECT * FROM stocks where id=-1 or 1=1
+2016/10/15 16:25:34 [WARN]  Pattern not found: [53 55 51 52 55 52 50 53 55 51 53 49 115 116 111 99 107 115 53 55 51 53 50 105 100 54 49 52 53 53 55 51 55 57 53 55 52 48 52 53 55 51 55 57 54 49 53 55 51 55 57] (SELECT * FROM stocks where id=-1 or 1=1)
+2016/10/15 16:25:34 [WARN]  Dropping connection
+</code></pre>
+
+<p><strong>Web Interface</strong></p>
+
+<p><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/graph.png" alt="Web UI"></p>
+
+<hr>
+
+<h2>
+<a id="demo" class="anchor" href="#demo" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Demo</h2>
+
+<p>For testing we have a vulnerable page at <code>http://192.168.22.1/user.php</code></p>
+
+<p><code>user.php</code> contents:</p>
+
+<div class="highlight highlight-text-html-php"><pre><span class="pl-pse">&lt;?php</span><span class="pl-s1"></span>
+<span class="pl-s1"><span class="pl-k">include</span>(<span class="pl-s"><span class="pl-pds">'</span>config.php<span class="pl-pds">'</span></span>);</span>
+<span class="pl-s1"><span class="pl-c">// Create connection</span></span>
+<span class="pl-s1"><span class="pl-smi">$conn</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-c1">mysqli</span>(<span class="pl-smi">$servername</span>, <span class="pl-smi">$username</span>, <span class="pl-smi">$password</span>, <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>);</span>
+<span class="pl-s1"></span>
+<span class="pl-s1"><span class="pl-c">// Check connection</span></span>
+<span class="pl-s1"><span class="pl-k">if</span> (<span class="pl-smi">$conn</span><span class="pl-k">-&gt;</span><span class="pl-smi">connect_error</span>) {</span>
+<span class="pl-s1">    <span class="pl-k">die</span>(<span class="pl-s"><span class="pl-pds">"</span>Connection failed: <span class="pl-pds">"</span></span> <span class="pl-k">.</span> <span class="pl-smi">$conn</span><span class="pl-k">-&gt;</span><span class="pl-smi">connect_error</span>);</span>
+<span class="pl-s1">}</span>
+<span class="pl-s1"></span>
+<span class="pl-s1"><span class="pl-k">if</span> (<span class="pl-k">!</span><span class="pl-c1">empty</span>(<span class="pl-smi">$_GET</span>[<span class="pl-s"><span class="pl-pds">'</span>id<span class="pl-pds">'</span></span>])){</span>
+<span class="pl-s1">  <span class="pl-k">if</span> (<span class="pl-smi">$result</span> <span class="pl-k">=</span> <span class="pl-smi">$conn</span><span class="pl-k">-&gt;</span>query(<span class="pl-s"><span class="pl-pds">"</span><span class="pl-s1"><span class="pl-k">SELECT</span> <span class="pl-k">*</span> <span class="pl-k">FROM</span> Persons <span class="pl-k">WHERE</span> id<span class="pl-k">=</span></span><span class="pl-pds">"</span></span><span class="pl-k">.</span><span class="pl-smi">$_GET</span>[<span class="pl-s"><span class="pl-pds">'</span>id<span class="pl-pds">'</span></span>])) {</span>
+<span class="pl-s1">    <span class="pl-k">foreach</span>(<span class="pl-smi">$result</span> <span class="pl-k">as</span> <span class="pl-smi">$k</span> <span class="pl-k">=&gt;</span> <span class="pl-smi">$v</span>){</span>
+<span class="pl-s1">      <span class="pl-c1">echo</span> <span class="pl-s"><span class="pl-pds">"</span>Name: &lt;b&gt;{<span class="pl-smi">$v</span>[<span class="pl-s"><span class="pl-pds">'</span>Name<span class="pl-pds">'</span></span>]}&lt;/b&gt;&lt;br /&gt;City: &lt;b&gt;{<span class="pl-smi">$v</span>[<span class="pl-s"><span class="pl-pds">'</span>City<span class="pl-pds">'</span></span>]}&lt;/b&gt;<span class="pl-pds">"</span></span> ;</span>
+<span class="pl-s1">    }</span>
+<span class="pl-s1">    <span class="pl-c1">mysqli_free_result</span>(<span class="pl-smi">$result</span>);</span>
+<span class="pl-s1">  }</span>
+<span class="pl-s1"> }</span>
+<span class="pl-s1"><span class="pl-smi">$conn</span><span class="pl-k">-&gt;</span>close();</span></pre></div>
+
+<p>We are using <a href="https://github.com/sqlmapproject/sqlmap">sqlmap</a> for exploiting the vulnerability, result are as below:</p>
+
+<pre><code>$ sqlmap -u http://192.168.22.1/user.php?id=1
+</code></pre>
+
+<pre><code>[12:14:31] [INFO] GET parameter 'id' is 'Generic UNION query (NULL) - 1 to 20 columns' injectable
+GET parameter 'id' is vulnerable. Do you want to keep testing the others (if any)? [y/N]
+sqlmap identified the following injection point(s) with a total of 53 HTTP(s) requests:
+---
+Parameter: id (GET)
+    Type: boolean-based blind
+    Title: AND boolean-based blind - WHERE or HAVING clause
+    Payload: id=1 AND 8909=8909
+
+    Type: AND/OR time-based blind
+    Title: MySQL &gt;= 5.0.12 AND time-based blind (SELECT)
+    Payload: id=1 AND (SELECT * FROM (SELECT(SLEEP(5)))eIyW)
+
+    Type: UNION query
+    Title: Generic UNION query (NULL) - 3 columns
+    Payload: id=1 UNION ALL SELECT NULL,NULL,CONCAT(0x71786b7071,0x64666b56715965797a6e654141634c765a6575674b79686461476c5556766671584f74486c5a5a58,0x717a717a71)-- -
+---
+[12:14:33] [INFO] the back-end DBMS is MySQL
+web server operating system: Linux Ubuntu
+web application technology: PHP 7.0.8
+back-end DBMS: MySQL 5.0.12
+</code></pre>
+
+<p>Then we try to exploiting it again using the same tool, this time DBShield is protecting the database:</p>
+
+<pre><code>$ sqlmap -u http://192.168.22.1/user.php?id=1
+</code></pre>
+
+<pre><code>[12:20:36] [INFO] testing 'Oracle AND time-based blind'
+[12:20:37] [INFO] testing 'Generic UNION query (NULL) - 1 to 10 columns'
+[12:20:37] [WARNING] using unescaped version of the test because of zero knowledge of the back-end DBMS. You can try to explicitly set it using option '--dbms'
+[12:20:43] [INFO] testing 'MySQL UNION query (NULL) - 1 to 10 columns'
+[12:20:47] [WARNING] GET parameter 'id' is not injectable
+</code></pre>
+
+<hr>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>Get it</p>
+
+<pre><code>$ go get -u github.com/nim4/DBShield
+</code></pre>
+
+<p>Then you can get help using "-h" argument:</p>
+
+<pre><code>$ $GOPATH/bin/DBShield -h
+DBShield 1.0.0-beta2
+Usage of DBShield:
+  -c string
+        Config file (default "/etc/dbshield.yml")
+  -d    Get list of captured patterns
+  -h    Show help
+  -k    Show parsed config and exit
+  -version
+        Show version
+
+</code></pre>
+
+<p>and run it with your configuration like:</p>
+
+<pre><code>$ $GOPATH/bin/DBShield -c config.yml
+</code></pre>
+
+<p>see <a href="https://github.com/nim4/DBShield/blob/master/conf/dbshield.yml">sample configuration  file</a></p>
+
+<hr>
+
+<h2>
+<a id="supports" class="anchor" href="#supports" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Supports:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Database</th>
+<th align="center">Protect</th>
+<th align="center">SSL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><strong>DB2</strong></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png" alt="Yes"></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/no.png" alt="No"></td>
+</tr>
+<tr>
+<td align="center"><strong>MariaDB</strong></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png" alt="Yes"></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png" alt="Yes"></td>
+</tr>
+<tr>
+<td align="center"><strong>MySQL</strong></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png" alt="Yes"></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png" alt="Yes"></td>
+</tr>
+<tr>
+<td align="center"><strong>Oracle</strong></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png" alt="Yes"></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/no.png" alt="No"></td>
+</tr>
+<tr>
+<td align="center"><strong>Postgres</strong></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png" alt="Yes"></td>
+<td align="center"><img src="https://raw.githubusercontent.com/nim4/DBShield/master/misc/yes.png" alt="Yes"></td>
+</tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2>
+<a id="to-do" class="anchor" href="#to-do" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>To Do</h2>
+
+<p>(Sorted by priority)</p>
+
+<ul>
+<li>Improve documentation</li>
+<li>Add Microsoft SQL Server</li>
+<li>Add more command-line arguments</li>
+<li>Get 90% test coverage</li>
+<li>Support Oracle SSL</li>
+</ul>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/nim4/DBShield/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/nim4/DBShield/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/nim4/DBShield"></a> is maintained by <a href="https://github.com/nim4">nim4</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
