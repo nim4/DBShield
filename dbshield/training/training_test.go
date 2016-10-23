@@ -86,6 +86,9 @@ func TestCheckQuery(t *testing.T) {
 	defer tmpfile.Close()
 	path := tmpfile.Name()
 	training.DBCon, err = bolt.Open(path, 0600, nil)
+	if err != nil {
+		panic(err)
+	}
 	if training.CheckQuery(c1) {
 		t.Error("Expected false")
 	}

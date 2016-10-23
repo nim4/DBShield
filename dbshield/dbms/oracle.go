@@ -104,12 +104,8 @@ func (o *Oracle) Handler() error {
 		}
 
 		_, err = o.server.Write(buf)
-		if err != nil {
+		if err != nil || eof {
 			return err
-		}
-
-		if eof { //checking eof after sending the packet to server
-			return nil
 		}
 
 		err = readWrite(o.server, o.client, o.readPacket)
