@@ -22,7 +22,7 @@ func main() {
 
 	//Parsing command line arguments
 	config := flag.String("c", "/etc/dbshield.yml", "Config file")
-	listPatterns := flag.Bool("d", false, "Get list of captured patterns")
+	listPatterns := flag.Bool("l", false, "Get list of captured patterns")
 	checkConfig := flag.Bool("k", false, "Show parsed config and exit")
 	showVersion := flag.Bool("version", false, "Show version")
 	showHelp := flag.Bool("h", false, "Show help")
@@ -44,16 +44,14 @@ func main() {
 	}
 
 	if *listPatterns {
-		if err := dbshield.Patterns(); err != nil {
-			log.Println(err)
-		}
+		err := dbshield.Patterns()
+		log.Println(err)
 		return
 	}
 
 	if *checkConfig {
-		if err := dbshield.Check(); err != nil {
-			log.Println(err)
-		}
+		err := dbshield.Check()
+		log.Println(err)
 		return
 	}
 

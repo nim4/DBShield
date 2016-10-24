@@ -76,7 +76,6 @@ func (m *MySQL) Handler() error {
 			logger.Infof("Using database: %v", m.currentDB)
 		case 0x03: //Query
 			query := data[1:]
-			logger.Infof("Query: %s", query)
 			context := sql.QueryContext{
 				Query:    string(query),
 				Database: m.currentDB,

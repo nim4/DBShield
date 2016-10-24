@@ -1,3 +1,4 @@
+"use strict";
 // Graph Labels
 var names = ['Queries', 'Abnormal'];
 var groups = new vis.DataSet();
@@ -77,8 +78,6 @@ function renderStep() {
       animation: true
     });
   }
-  setTimeout(renderStep, 1000);
-
 }
 
 
@@ -108,6 +107,7 @@ function ajax(init) {
         // To filter the first request
         yValuesOld = yValues;
       }
+      renderStep()
     }
   };
   xhttp.onerror = function() {
@@ -118,11 +118,10 @@ function ajax(init) {
   }
   xhttp.open("GET", '/api?_=' + new Date().getTime(), true);
   xhttp.send();
+  setTimeout(function() {
+    ajax(false)
+  }, 1000);
 }
 
-renderStep();
 addDataPoint();
 ajax(true);
-setInterval(function() {
-  ajax(false)
-}, 1000);
