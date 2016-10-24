@@ -19,7 +19,7 @@ import (
 )
 
 //Version of the library
-var Version = "1.0.0-beta2"
+var Version = "1.0.0-beta3"
 
 var configFile string
 

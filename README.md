@@ -142,7 +142,7 @@ DBShield 1.0.0-beta2
 Usage of DBShield:
   -c string
     	Config file (default "/etc/dbshield.yml")
-  -d	Get list of captured patterns
+  -l	Get list of captured patterns
   -h	Show help
   -k	Show parsed config and exit
   -version
@@ -155,6 +155,11 @@ and run it with your configuration like:
 $ $GOPATH/bin/DBShield -c config.yml
 ```
 see [sample configuration  file](https://github.com/nim4/DBShield/blob/master/conf/dbshield.yml)
+
+
+>:warning: **WARNING:**
+> Do NOT use default certificates in production environments!
+
 
 ---
 ## Supports:
