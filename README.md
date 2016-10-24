@@ -27,6 +27,13 @@ After collecting enough patterns we can run DBShield in protect mode. Protect mo
 ![Protect mode](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_03.png)
 
 ---
+## Demo
+For demo, we are using [sqlmap](https://github.com/sqlmapproject/sqlmap)(automatic SQL injection and database takeover tool) to exploit the SQL injection vulnerability at `user.php`
+
+In the first scenario, the sqlmap successfully exploits the SQL injection when web application connected directly to the database(MySQL), In the second scenario, we modify the `user.php` so DBShield gets between the web application and database which will drop the injection attempt and make sqlmap fail.
+
+![Demo](misc/demo.gif)
+---
 
 ## Sample Outputs
 
@@ -57,13 +64,6 @@ $ go run main.go
 
 ![Web UI](https://raw.githubusercontent.com/nim4/DBShield/master/misc/graph.png)
 
----
-## Demo
-For demo, we are using [sqlmap](https://github.com/sqlmapproject/sqlmap)(automatic SQL injection and database takeover tool) to exploit the SQL injection vulnerability at `user.php`
-
-In the first scenario, the sqlmap successfully exploits the SQL injection when web application connected directly to the database(MySQL), In the second scenario, we modify the `user.php` so DBShield gets between the web application and database which will drop the injection attempt and make sqlmap fail.
-
-![Demo](misc/demo.gif)
 ---
 ## Installation
 
