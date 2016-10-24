@@ -20,7 +20,7 @@ func Test(t *testing.T) {
 	main()
 
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	os.Args = []string{os.Args[0], "-l"}
+	os.Args = []string{os.Args[0], "-l", "-c", "conf/invalid.yml"}
 	main()
 
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -36,8 +36,8 @@ func Test(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dat = bytes.Replace(dat, []byte("dbDir: "), []byte("dbDir: /INVALID"), 1)
 	path := os.TempDir() + "/tempconfig.yml"
+	dat = bytes.Replace(dat, []byte("dbDir: "), []byte("dbDir: "+path), 1)
 	err = ioutil.WriteFile(path, dat, 0600)
 	if err != nil {
 		t.Fatal(err)
