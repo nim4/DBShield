@@ -17,18 +17,12 @@ func TestMain(t *testing.T) {
 	}
 	defer tmpfile.Close()
 	path := tmpfile.Name()
-	training.DBCon, err = bolt.Open(path, 0600, nil)
+	training.DBConLearning, err = bolt.Open(path, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
-	if err := training.DBCon.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("queries"))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucketIfNotExists([]byte("abnormal"))
-		return err
-	}); err != nil {
+	training.DBConProtect, err = bolt.Open(path+"2", 0600, nil)
+	if err != nil {
 		panic(err)
 	}
 }
@@ -36,11 +30,11 @@ func TestMain(t *testing.T) {
 func TestAddToTrainingSet(t *testing.T) {
 	var err error
 	c := sql.QueryContext{
-		Query:    "select * from test;",
-		Database: "test",
-		User:     "test",
-		Client:   "127.0.0.1",
-		Time:     time.Now().Unix(),
+		Query:    []byte("select * from test;"),
+		Database: []byte("test"),
+		User:     []byte("test"),
+		Client:   []byte("127.0.0.1"),
+		Time:     time.Now(),
 	}
 	err = training.AddToTrainingSet(c)
 	if err != nil {
@@ -54,18 +48,18 @@ func TestAddToTrainingSet(t *testing.T) {
 
 func TestCheckQuery(t *testing.T) {
 	c1 := sql.QueryContext{
-		Query:    "select * from test;",
-		Database: "test",
-		User:     "test",
-		Client:   "127.0.0.1",
-		Time:     time.Now().Unix(),
+		Query:    []byte("select * from test;"),
+		Database: []byte("test"),
+		User:     []byte("test"),
+		Client:   []byte("127.0.0.1"),
+		Time:     time.Now(),
 	}
 	c2 := sql.QueryContext{
-		Query:    "select * from user;",
-		Database: "test",
-		User:     "test",
-		Client:   "127.0.0.1",
-		Time:     time.Now().Unix(),
+		Query:    []byte("select * from user;"),
+		Database: []byte("test"),
+		User:     []byte("test"),
+		Client:   []byte("127.0.0.1"),
+		Time:     time.Now(),
 	}
 	training.AddToTrainingSet(c1)
 	if !training.CheckQuery(c1) {
@@ -75,9 +69,9 @@ func TestCheckQuery(t *testing.T) {
 		t.Error("Expected true")
 	}
 
-	tmpCon := training.DBCon
+	tmpCon := training.DBConLearning
 	defer func() {
-		training.DBCon = tmpCon
+		training.DBConLearning = tmpCon
 	}()
 	tmpfile, err := ioutil.TempFile("", "testdb")
 	if err != nil {
@@ -85,7 +79,7 @@ func TestCheckQuery(t *testing.T) {
 	}
 	defer tmpfile.Close()
 	path := tmpfile.Name()
-	training.DBCon, err = bolt.Open(path, 0600, nil)
+	training.DBConLearning, err = bolt.Open(path, 0600, nil)
 	if err != nil {
 		panic(err)
 	}

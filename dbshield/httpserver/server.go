@@ -2,7 +2,6 @@ package httpserver
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"sync"
 	"time"
@@ -10,7 +9,6 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/securecookie"
 	"github.com/nim4/DBShield/dbshield/config"
-	"github.com/nim4/DBShield/dbshield/sql"
 	"github.com/nim4/DBShield/dbshield/training"
 )
 
@@ -55,35 +53,19 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	total := 0
 
 	//Count queries
-	if err := training.DBCon.View(func(tx *bolt.Tx) error {
-		var contextArray []sql.QueryContext
-		b := tx.Bucket([]byte("queries"))
-		if b == nil {
-			return errors.New("Bucket not found")
-		}
-		return b.ForEach(func(k []byte, v []byte) error {
-			if err := json.Unmarshal(v, &contextArray); err != nil {
-				return err
-			}
-			total += len(contextArray)
+	training.DBConLearning.View(func(tx *bolt.Tx) error {
+		return tx.ForEach(func(name []byte, b *bolt.Bucket) error {
+			total += b.Stats().KeyN
 			return nil
 		})
-	}); err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
+	})
 	//Count abnormal
-	if err := training.DBCon.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("abnormal"))
-		if b == nil {
-			return errors.New("Bucket not found")
-		}
-		abnormal = b.Stats().KeyN
-		return nil
-	}); err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
+	training.DBConProtect.View(func(tx *bolt.Tx) error {
+		return tx.ForEach(func(name []byte, b *bolt.Bucket) error {
+			abnormal += b.Stats().KeyN
+			return nil
+		})
+	})
 	out, _ := json.Marshal(struct {
 		Total    int
 		Abnormal int

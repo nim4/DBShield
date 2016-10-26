@@ -48,6 +48,7 @@ type Configurations struct {
 	Action     string
 	ActionFunc func() error `json:"-"`
 
+	SyncInterval uint
 	//Key-> database.table.column
 	//Masks map[string]mask
 }
@@ -143,6 +144,10 @@ func configGeneral() (err error) {
 
 	Config.ListenIP = strConfigDefualt("listenIP", "0.0.0.0")
 
+	Config.SyncInterval, err = intConfig("syncInterval", 5, 0)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

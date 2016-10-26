@@ -15,8 +15,8 @@ type DB2 struct {
 	client      net.Conn
 	server      net.Conn
 	certificate tls.Certificate
-	currentDB   string
-	username    string
+	currentDB   []byte
+	username    []byte
 	reader      func(net.Conn) ([]byte, error)
 }
 
@@ -75,11 +75,11 @@ func (d *DB2) Handler() (err error) {
 				end = true
 			} else if dr.ddm[0] == 0x24 && dr.ddm[1] == 0x14 {
 				context := sql.QueryContext{
-					Query:    string(dr.param),
+					Query:    dr.param,
 					Database: d.currentDB,
 					User:     d.username,
 					Client:   remoteAddrToIP(d.client.RemoteAddr()),
-					Time:     time.Now().Unix(),
+					Time:     time.Now(),
 				}
 				processContext(context)
 			}
@@ -130,12 +130,12 @@ func (d *DB2) handleLogin() (success bool, err error) {
 	startIndex := bytes.Index(buf, []byte{0x21, 0x10})
 	buf = buf[startIndex+2:]
 	atByteIndex := bytes.IndexByte(buf, 0x40) // 0x40 = @
-	d.currentDB = string(ebc2asc(buf[:atByteIndex]))
+	d.currentDB = ebc2asc(buf[:atByteIndex])
 	//Get username
 	startIndex = bytes.Index(buf, []byte{0x11, 0xa0})
 	buf = buf[startIndex+2:]
 	nullByteIndex := bytes.IndexByte(buf, 0x00)
-	d.username = string(ebc2asc(buf[:nullByteIndex]))
+	d.username = ebc2asc(buf[:nullByteIndex])
 	//Receive result
 	buf, err = d.reader(d.server)
 	if err != nil {

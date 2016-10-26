@@ -5,7 +5,6 @@ package dbshield
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -36,39 +35,29 @@ func SetConfigFile(cf string) error {
 //Check config file and writes it to STDUT
 func Check() error {
 	confJSON, err := json.MarshalIndent(config.Config, "", "    ")
-	if err != nil {
-		return err
-	}
 	fmt.Println(string(confJSON))
-	return nil
+	return err
 }
 
 //Patterns lists the captured patterns
-func Patterns() error {
+func Patterns() {
 	initModel()
-	if err := training.DBCon.View(func(tx *bolt.Tx) error {
-		var contextArray []sql.QueryContext
-		b := tx.Bucket([]byte("queries"))
-		if b == nil {
-			return errors.New("Bucket not found")
-		}
-		return b.ForEach(func(k []byte, v []byte) error {
-			if err := json.Unmarshal(v, &contextArray); err != nil {
-				return err
-			}
+	training.DBConLearning.View(func(tx *bolt.Tx) error {
+		return tx.ForEach(func(pattern []byte, b *bolt.Bucket) error {
+			k, v := b.Cursor().First()
+			var context sql.QueryContext
+			context.Unmarshal(v)
 			fmt.Printf(
 				`Pattern:     0x%x
 Sample query: %s
 -----------------
 `,
 				k,
-				contextArray[0].Query)
+				context.Query)
+
 			return nil
 		})
-	}); err != nil {
-		return err
-	}
-	return nil
+	})
 }
 
 func postConfig() (err error) {

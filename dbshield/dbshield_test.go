@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/nim4/DBShield/dbshield/config"
-	"github.com/nim4/DBShield/dbshield/training"
 )
 
 func TestMain(t *testing.T) {
@@ -22,17 +21,12 @@ func TestSetConfigFile(t *testing.T) {
 }
 
 func TestPatterns(t *testing.T) {
-	if training.DBCon != nil {
-		training.DBCon.Close()
-	}
+	closeHandlers()
 	err := SetConfigFile("conf/dbshield.yml")
 	if err != nil {
 		t.Error("Got error", err)
 	}
-	err = Patterns()
-	if err != nil {
-		t.Error("Got error", err)
-	}
+	Patterns()
 }
 
 func TestCheck(t *testing.T) {
@@ -66,9 +60,7 @@ func TestPostConfig(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	if training.DBCon != nil {
-		training.DBCon.Close()
-	}
+	closeHandlers()
 	SetConfigFile("conf/dbshield.yml")
 	//It should fail if port is already open
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.Config.ListenIP, config.Config.ListenPort))

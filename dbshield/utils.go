@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/nim4/DBShield/dbshield/config"
@@ -20,30 +21,48 @@ import (
 //initial boltdb database
 func initModel() {
 	var err error
-	path := path.Join(config.Config.DBDir, config.Config.TargetIP+"_"+config.Config.DBType+".db")
+	path := path.Join(config.Config.DBDir, config.Config.TargetIP+"_"+config.Config.DBType)
 	logger.Infof("Internal DB: %s", path)
-	training.DBCon, err = bolt.Open(path, 0600, &bolt.Options{
-		Timeout:    5,
-		NoGrowSync: false,
-	})
-	if err != nil {
-		panic(err)
+	if training.DBConLearning == nil {
+		training.DBConLearning, err = bolt.Open(path+"_learning.db", 0600, nil)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	training.DBCon.Update(func(tx *bolt.Tx) error {
-		tx.CreateBucketIfNotExists([]byte("queries"))
-		tx.CreateBucketIfNotExists([]byte("abnormal"))
-		return nil
-	})
+	if training.DBConProtect == nil {
+		training.DBConProtect, err = bolt.Open(path+"_abnormal.db", 0600, nil)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if config.Config.SyncInterval != 0 {
+		training.DBConLearning.NoSync = true
+		training.DBConProtect.NoSync = true
+		ticker := time.NewTicker(time.Second * time.Duration(config.Config.SyncInterval))
+		go func() {
+			for range ticker.C {
+				training.DBConLearning.Sync()
+				training.DBConProtect.Sync()
+			}
+		}()
+	}
 }
 
 func closeHandlers() {
-	if training.DBCon != nil {
-		training.DBCon.Close()
+	if training.DBConLearning != nil {
+		training.DBConLearning.Sync()
+		training.DBConLearning.Close()
+	}
+	if training.DBConProtect != nil {
+		training.DBConProtect.Sync()
+		training.DBConProtect.Close()
 	}
 	if logger.Output != nil {
 		logger.Output.Close()
 	}
+	// pprof.StopCPUProfile()
 }
 
 //catching Interrupts

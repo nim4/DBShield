@@ -6,18 +6,13 @@ import (
 	"testing"
 
 	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/mock"
 )
 
 func TestInitModel(t *testing.T) {
 	config.Config.DBDir = os.TempDir()
 	config.Config.DBType = "mysql"
-	initModel()
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Expected panic")
-		}
-	}()
 	initModel()
 }
 
@@ -85,10 +80,12 @@ func TestHandleClient(t *testing.T) {
 }
 
 func TestCloseHandlers(t *testing.T) {
+	logger.Output = os.Stderr
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error("Panic!")
 		}
 	}()
 	closeHandlers()
+
 }

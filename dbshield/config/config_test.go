@@ -103,6 +103,13 @@ func TestConfigGeneral(t *testing.T) {
 	}
 	viper.Set("targetPort", 0)
 
+	viper.Set("syncInterval", -1)
+	err = configGeneral()
+	if err == nil {
+		t.Error("Expected error")
+	}
+	viper.Set("syncInterval", 5)
+
 	viper.Reset()
 	err = configGeneral()
 	if err == nil {
