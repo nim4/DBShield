@@ -24,6 +24,10 @@ func Test(t *testing.T) {
 	main()
 
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	os.Args = []string{os.Args[0], "-l", "-c", "conf/dbshield.yml"}
+	main()
+
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	os.Args = []string{os.Args[0], "-version"}
 	main()
 

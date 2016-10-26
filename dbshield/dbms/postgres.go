@@ -17,8 +17,8 @@ type Postgres struct {
 	client      net.Conn
 	server      net.Conn
 	certificate tls.Certificate
-	currentDB   string
-	username    string
+	currentDB   []byte
+	username    []byte
 	reader      func(net.Conn) ([]byte, error)
 }
 
@@ -71,11 +71,11 @@ func (p *Postgres) Handler() (err error) {
 		switch buf[0] {
 		case 0x51: //Simple query
 			context := sql.QueryContext{
-				Query:    string(buf[5:]),
+				Query:    buf[5:],
 				Database: p.currentDB,
 				User:     p.username,
 				Client:   remoteAddrToIP(p.client.RemoteAddr()),
-				Time:     time.Now().Unix(),
+				Time:     time.Now(),
 			}
 			processContext(context)
 
@@ -129,7 +129,7 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 
 	data := buf[8:]
 
-	payload := make(map[string]string)
+	payload := make(map[string][]byte)
 	for {
 		//reading key
 		nullByteIndex := bytes.IndexByte(data, 0x00)
@@ -144,7 +144,7 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 		if nullByteIndex <= 0 {
 			break
 		}
-		payload[key] = string(data[:nullByteIndex+1])
+		payload[key] = data[:nullByteIndex+1]
 		data = data[nullByteIndex+1:]
 	}
 	for key := range payload {

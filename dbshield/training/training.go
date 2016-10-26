@@ -1,8 +1,8 @@
 package training
 
 import (
+	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -12,8 +12,13 @@ import (
 	"github.com/nim4/DBShield/dbshield/sql"
 )
 
-//DBCon holds a pointer to our local database connection
-var DBCon *bolt.DB
+//DBConLearning holds a pointer to our local database connection which has valid requests
+var DBConLearning *bolt.DB
+
+//DBConProtect holds a pointer to our local database connection which has rejected requests
+var DBConProtect *bolt.DB
+
+var dummyErrorToExitIter = errors.New("Dummy Error")
 
 //AddToTrainingSet records query context in local database
 func AddToTrainingSet(context sql.QueryContext) error {
@@ -21,30 +26,15 @@ func AddToTrainingSet(context sql.QueryContext) error {
 	pattern := sql.Pattern(context.Query)
 	//logger.Debug("Pattern", pattern)
 
-	if err := DBCon.Update(func(tx *bolt.Tx) error {
-		var contextArray []sql.QueryContext
-		b := tx.Bucket([]byte("queries"))
-		if b == nil {
-			panic(errors.New("Bucket not found"))
-		}
-		v := b.Get(pattern)
-		if v != nil {
-			//logger.Debug("Key found: ", string(v))
-			if err := json.Unmarshal(v, &contextArray); err != nil {
-				return err
-			}
-		}
-		contextArray = append(contextArray, context)
-		//logger.Debug("Context Array:", contextArray)
-		encoded, err := json.Marshal(contextArray)
-		//logger.Debug("JSON:", string(encoded))
+	if err := DBConLearning.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists(pattern)
 		if err != nil {
 			return err
 		}
-		if err := b.Put(pattern, encoded); err != nil {
+		encoded := context.Marshal()
+		if err = b.Put(uniqID(b), encoded); err != nil {
 			return err
 		}
-
 		return nil
 	}); err != nil {
 		logger.Warning(err)
@@ -57,67 +47,68 @@ func AddToTrainingSet(context sql.QueryContext) error {
 //We should keep it as fast as possible
 func CheckQuery(context sql.QueryContext) bool {
 	pattern := sql.Pattern(context.Query)
-	if err := DBCon.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("queries"))
+	if err := DBConLearning.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(pattern))
 		if b == nil {
-			return errors.New("Bucket not found")
+			return errors.New("Pattern not found")
 		}
-		v := b.Get(pattern)
-		if v != nil {
-			var contextArray []sql.QueryContext
-			if err := json.Unmarshal(v, &contextArray); err != nil {
-				return err
-			}
-
-			if config.Config.CheckUser {
-				validUser := false
-				for _, con := range contextArray {
-					if con.User == context.User {
-						validUser = true
-						break
-					}
-				}
-				if !validUser {
-					return fmt.Errorf("User '%v' is not valid for this query", context.User)
-				}
-			}
-
-			if config.Config.CheckSource {
-				validAddr := false
-				for _, con := range contextArray {
-					if con.Client == context.Client {
-						validAddr = true
-						break
-					}
-					if !validAddr {
-						return fmt.Errorf("Client '%v' is not valid for this query", context.Client)
-					}
-				}
-			}
+		if !config.Config.CheckUser && !config.Config.CheckSource {
 			return nil
 		}
-		return fmt.Errorf("Pattern not found: %v (%s)", pattern, context.Query)
+		var tmpContext sql.QueryContext
+		validUser := !config.Config.CheckUser
+		validSource := !config.Config.CheckSource
+		err := b.ForEach(func(k []byte, v []byte) error {
+			if validUser && validSource {
+				return dummyErrorToExitIter
+			}
+			tmpContext.Unmarshal(v)
+			logger.Info(string(tmpContext.User), string(context.User))
+			if !validUser && bytes.Compare(tmpContext.User, context.User) == 0 {
+				validUser = true
+			}
+			logger.Info(string(tmpContext.Client), string(context.Client))
+			if !validSource && bytes.Compare(tmpContext.Client, context.Client) == 0 {
+				validSource = true
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		if !validUser {
+			return fmt.Errorf("User '%v' is not valid for this query", context.User)
+		}
+
+		if !validSource {
+			return fmt.Errorf("Client '%v' is not valid for this query", context.Client)
+		}
+
+		return nil
+
 	}); err != nil {
 		logger.Warning(err)
 		//Record abnormal
-		if err = recordPattern(pattern); err != nil {
-			logger.Warning(err)
-		}
+		recordAbnormal(pattern, context)
 		return false
 	}
 	return true
 }
 
-func recordPattern(pattern []byte) error {
-	return DBCon.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("abnormal"))
-		if b == nil {
-			return errors.New("Bucket not found")
-		}
+func recordAbnormal(pattern []byte, context sql.QueryContext) error {
+	return DBConProtect.Update(func(tx *bolt.Tx) error {
+		b, _ := tx.CreateBucketIfNotExists(pattern)
 		id, _ := b.NextSequence()
 		key := make([]byte, 8)
 		binary.BigEndian.PutUint64(key, id)
-		b.Put(key, pattern)
-		return nil
+		return b.Put(key, context.Marshal())
 	})
+}
+
+func uniqID(b *bolt.Bucket) []byte {
+	buf := make([]byte, 8)
+	id, _ := b.NextSequence()
+	binary.BigEndian.PutUint64(buf, id)
+	return buf
 }

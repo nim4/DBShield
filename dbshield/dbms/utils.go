@@ -277,14 +277,15 @@ func ebc2asc(ebc []byte) []byte {
 	return asc
 }
 
-func pascalString(data []byte) (str string, size uint) {
+func pascalString(data []byte) (b []byte, size uint) {
 	size = uint(data[0])
-	str = string(data[1 : size+1])
+	b = data[1 : size+1]
 	return
 }
 
-func remoteAddrToIP(addr net.Addr) string {
-	return addr.(*net.TCPAddr).IP.String()
+// FIXME: Avoid String()
+func remoteAddrToIP(addr net.Addr) []byte {
+	return []byte(addr.(*net.TCPAddr).IP.String())
 }
 
 func handlePanic() {

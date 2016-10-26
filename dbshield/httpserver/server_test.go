@@ -3,6 +3,7 @@ package httpserver
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -10,9 +11,11 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/sql"
 	"github.com/nim4/DBShield/dbshield/training"
 )
 
@@ -26,18 +29,12 @@ func TestMain(t *testing.T) {
 	}
 	defer tmpfile.Close()
 	path := tmpfile.Name()
-	training.DBCon, err = bolt.Open(path, 0600, nil)
+	training.DBConLearning, err = bolt.Open(path, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
-	if err := training.DBCon.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("queries"))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucketIfNotExists([]byte("abnormal"))
-		return err
-	}); err != nil {
+	training.DBConProtect, err = bolt.Open(path+"2", 0600, nil)
+	if err != nil {
 		panic(err)
 	}
 }
@@ -103,17 +100,39 @@ func TestAPIHandler(t *testing.T) {
 	j.Total = 1
 	j.Abnormal = 1
 
-	err = json.Unmarshal(body, &j)
+	c1 := sql.QueryContext{
+		Query:    []byte("select * from test;"),
+		Database: []byte("test"),
+		User:     []byte("test"),
+		Client:   []byte("127.0.0.1"),
+		Time:     time.Now(),
+	}
+	c2 := sql.QueryContext{
+		Query:    []byte("select * from user;"),
+		Database: []byte("test"),
+		User:     []byte("test"),
+		Client:   []byte("127.0.0.1"),
+		Time:     time.Now(),
+	}
+	err = training.AddToTrainingSet(c1)
 	if err != nil {
 		t.Error("Got an error ", err)
 	}
-	if j.Total != 0 || j.Abnormal != 0 {
-		t.Error("Expected 0 got", j)
+	training.CheckQuery(c2)
+	apiHandler(w, r)
+	body, _ = ioutil.ReadAll(w.Body)
+	err = json.Unmarshal(body, &j)
+	fmt.Println(j)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
+	if j.Total == 0 || j.Abnormal == 0 {
+		t.Error("Expected 1, 1 got", j)
 	}
 
-	tmpCon := training.DBCon
+	tmpCon := training.DBConLearning
 	defer func() {
-		training.DBCon = tmpCon
+		training.DBConLearning = tmpCon
 	}()
 	tmpfile, err := ioutil.TempFile("", "testdb")
 	if err != nil {
@@ -121,26 +140,19 @@ func TestAPIHandler(t *testing.T) {
 	}
 	defer tmpfile.Close()
 	path := tmpfile.Name()
-	training.DBCon, err = bolt.Open(path, 0600, nil)
+	training.DBConLearning, err = bolt.Open(path, 0600, nil)
 	apiHandler(w, r)
 	body, err = ioutil.ReadAll(w.Body)
 	err = json.Unmarshal(body, &j)
-	if err == nil {
-		t.Error("Expected error")
+	if err != nil {
+		t.Error("Got an error ", err)
 	}
 
-	//Just create queries
-	if err = training.DBCon.Update(func(tx *bolt.Tx) error {
-		_, err = tx.CreateBucketIfNotExists([]byte("queries"))
-		return err
-	}); err != nil {
-		panic(err)
-	}
 	apiHandler(w, r)
 	body, err = ioutil.ReadAll(w.Body)
 	err = json.Unmarshal(body, &j)
-	if err == nil {
-		t.Error("Expected error")
+	if err != nil {
+		t.Error("Got an error ", err)
 	}
 }
 

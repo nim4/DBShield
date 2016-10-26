@@ -15,8 +15,8 @@ type Oracle struct {
 	client      net.Conn
 	server      net.Conn
 	certificate tls.Certificate
-	currentDB   string
-	username    string
+	currentDB   []byte
+	username    []byte
 	reader      func(net.Conn) ([]byte, error)
 }
 
@@ -65,9 +65,10 @@ func (o *Oracle) Handler() error {
 			connectData := buf[len(buf)-connectDataLen:]
 
 			//Extracting Service name
+			// FIXME: avoid string
 			tmp1 := strings.Split(string(connectData), "SERVICE_NAME=")
 			tmp2 := strings.Split(tmp1[1], ")")
-			o.currentDB = tmp2[0]
+			o.currentDB = []byte(tmp2[0])
 
 			logger.Debugf("Connect Data: %s", connectData)
 			logger.Debugf("Service Name: %s", o.currentDB)
@@ -87,11 +88,11 @@ func (o *Oracle) Handler() error {
 					case 0x5e: //reading query
 						query, _ := pascalString(payload[70:])
 						context := sql.QueryContext{
-							Query:    string(query),
+							Query:    query,
 							Database: o.currentDB,
 							User:     o.username,
 							Client:   remoteAddrToIP(o.client.RemoteAddr()),
-							Time:     time.Now().Unix(),
+							Time:     time.Now(),
 						}
 						processContext(context)
 					case 0x76: // Reading username

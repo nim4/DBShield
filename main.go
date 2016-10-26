@@ -20,13 +20,23 @@ func usage(showUsage bool) {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU()) // For Go < 1.5
 
+	config := flag.String("c", "/etc/dbshield.yml", "config file")
+	//cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
+	listPatterns := flag.Bool("l", false, "get list of captured patterns")
+	checkConfig := flag.Bool("k", false, "show parsed config and exit")
+	showVersion := flag.Bool("version", false, "show version")
+	showHelp := flag.Bool("h", false, "show help")
+
 	//Parsing command line arguments
-	config := flag.String("c", "/etc/dbshield.yml", "Config file")
-	listPatterns := flag.Bool("l", false, "Get list of captured patterns")
-	checkConfig := flag.Bool("k", false, "Show parsed config and exit")
-	showVersion := flag.Bool("version", false, "Show version")
-	showHelp := flag.Bool("h", false, "Show help")
 	flag.Parse()
+
+	// if *cpuprofile != "" {
+	// 	f, err := os.Create(*cpuprofile)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	pprof.StartCPUProfile(f)
+	// }
 
 	if *showHelp {
 		usage(true)
@@ -44,8 +54,7 @@ func main() {
 	}
 
 	if *listPatterns {
-		err := dbshield.Patterns()
-		log.Println(err)
+		dbshield.Patterns()
 		return
 	}
 

@@ -8,21 +8,30 @@
 #       protect - take action against abnormal queries
 mode: learning
 
-# Directory to save internal database(default: in model directory under OS's temp directory)
-dbDir: "/tmp/model/"
 # DBMS type(default: mysql)
 dbms: mysql
+
 # IP address to listen on(default: 0.0.0.0)
 listenIP: 0.0.0.0
+
 # Port number to listen on (0 means dbms default port ex. 3306 for mysql)
 listenPort: 5000
+
 # IP address of the server
 targetIP: 127.0.0.1
+
 # Port number of the dbms (0 means dbms default port ex. 3306 for mysql)
 targetPort: 0
+
 # TLS
 tlsPrivateKey:  cert/server-key.pem
 tlsCertificate: cert/server-cert.pem
+
+# Directory to save internal database(default: in model directory under OS's temp directory)
+dbDir: "/tmp/model/"
+
+# Sync internal database against the disk every n(default: 5) second (0 will force sync after each commit)
+SyncInterval: 5
 
 #############################
 ### HTTP Service          ###
@@ -49,7 +58,6 @@ httpPassword: ChangeMe
 #       pass  - pass the query to server
 action: drop
 
-
 # Properties to check for abnormality
 #
 # possible values: (you can choose more than one - comma separated)
@@ -58,7 +66,6 @@ action: drop
 #
 # Note: leave empty to avoid adiditional checks
 additionalChecks:  user,source
-
 
 #############################
 ### Logging               ###

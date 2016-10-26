@@ -15,8 +15,8 @@ type MySQL struct {
 	client      net.Conn
 	server      net.Conn
 	certificate tls.Certificate
-	currentDB   string
-	username    string
+	currentDB   []byte
+	username    []byte
 	reader      func(net.Conn) ([]byte, error)
 }
 
@@ -72,16 +72,16 @@ func (m *MySQL) Handler() error {
 		case 0x01: //Quit
 			return nil
 		case 0x02: //UseDB
-			m.currentDB = string(data[1:])
+			m.currentDB = data[1:]
 			logger.Infof("Using database: %v", m.currentDB)
 		case 0x03: //Query
 			query := data[1:]
 			context := sql.QueryContext{
-				Query:    string(query),
+				Query:    query,
 				Database: m.currentDB,
 				User:     m.username,
 				Client:   remoteAddrToIP(m.client.RemoteAddr()),
-				Time:     time.Now().Unix(),
+				Time:     time.Now(),
 			}
 			processContext(context)
 			// case 0x04: //Show fields
@@ -201,14 +201,14 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	return
 }
 
-func getUsernameHashDB(data []byte) (username string, hash []byte, db string) {
+func getUsernameHashDB(data []byte) (username []byte, hash []byte, db []byte) {
 	if len(data) < 33 {
 		return
 	}
 	pos := 32
 
 	nullByteIndex := bytes.IndexByte(data[pos:], 0x00)
-	username = string(data[pos : nullByteIndex+pos])
+	username = data[pos : nullByteIndex+pos]
 	logger.Infof("Username: %s", username)
 	pos += nullByteIndex + 2
 	hash = data[pos : pos+20]
@@ -216,7 +216,7 @@ func getUsernameHashDB(data []byte) (username string, hash []byte, db string) {
 	pos += 20
 	nullByteIndex = bytes.IndexByte(data[pos:], 0x00)
 	if nullByteIndex != 0 {
-		db = string(data[pos : nullByteIndex+pos])
+		db = data[pos : nullByteIndex+pos]
 		logger.Infof("Database: %s", db)
 	}
 	return
