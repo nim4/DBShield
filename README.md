@@ -77,14 +77,14 @@ Then you can see help using "-h" argument:
 $ $GOPATH/bin/DBShield -h
 DBShield 1.0.0-beta3
 Usage of DBShield:
-  -c string
-    	Config file (default "/etc/dbshield.yml")
-  -l	Get list of captured patterns
-  -h	Show help
-  -k	Show parsed config and exit
+  -a	get list of abnormal queries
+  -c file
+      config file (default "/etc/dbshield.yml")
+  -h	show help
+  -k	show parsed config and exit
+  -l	get list of captured patterns
   -version
-    	Show version
-
+      show version
 ```
 
 and run it with your configuration, like:
