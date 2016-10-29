@@ -2,6 +2,7 @@ package dbms
 
 import (
 	"crypto/tls"
+	"io"
 	"net"
 	"strings"
 	"time"
@@ -17,7 +18,7 @@ type Oracle struct {
 	certificate tls.Certificate
 	currentDB   []byte
 	username    []byte
-	reader      func(net.Conn) ([]byte, error)
+	reader      func(io.Reader) ([]byte, error)
 }
 
 //SetCertificate to use if client asks for SSL
@@ -27,18 +28,20 @@ func (o *Oracle) SetCertificate(crt, key string) (err error) {
 }
 
 //SetReader function for sockets IO
-func (o *Oracle) SetReader(f func(net.Conn) ([]byte, error)) {
+func (o *Oracle) SetReader(f func(io.Reader) ([]byte, error)) {
 	o.reader = f
 }
 
 //SetSockets for dbms (client and server sockets)
 func (o *Oracle) SetSockets(c, s net.Conn) {
+	defer handlePanic()
 	o.client = c
 	o.server = s
 }
 
 //Close sockets
 func (o *Oracle) Close() {
+	defer handlePanic()
 	o.client.Close()
 	o.server.Close()
 }
@@ -50,7 +53,8 @@ func (o *Oracle) DefaultPort() uint {
 
 //Handler gets incoming requests
 func (o *Oracle) Handler() error {
-	//defer handlePanic()
+	defer handlePanic()
+	defer o.Close()
 
 	for {
 		buf, err := o.readPacket(o.client)
@@ -98,7 +102,7 @@ func (o *Oracle) Handler() error {
 					case 0x76: // Reading username
 						val, _ := pascalString(payload[19:])
 						o.username = val
-						logger.Infof("Username: %s", o.username)
+						logger.Debugf("Username: %s", o.username)
 					}
 				}
 			}
@@ -117,7 +121,7 @@ func (o *Oracle) Handler() error {
 }
 
 //wrapper around our classic readPacket to handle segmented packets
-func (o *Oracle) readPacket(c net.Conn) (buf []byte, err error) {
+func (o *Oracle) readPacket(c io.Reader) (buf []byte, err error) {
 	buf, err = o.reader(c)
 	if err != nil {
 		return

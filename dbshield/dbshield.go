@@ -7,7 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"path"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/nim4/DBShield/dbshield/config"
@@ -41,22 +44,51 @@ func Check() error {
 
 //Patterns lists the captured patterns
 func Patterns() {
-	initModel()
-	training.DBConLearning.View(func(tx *bolt.Tx) error {
-		return tx.ForEach(func(pattern []byte, b *bolt.Bucket) error {
-			k, v := b.Cursor().First()
-			var context sql.QueryContext
-			context.Unmarshal(v)
-			fmt.Printf(
-				`Pattern:     0x%x
-Sample query: %s
------------------
-`,
-				k,
-				context.Query)
+	initModel(
+		path.Join(config.Config.DBDir,
+			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
 
-			return nil
-		})
+	training.DBCon.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("pattern"))
+		if b != nil {
+			return b.ForEach(func(k, v []byte) error {
+				if strings.Index(string(k), "_client_") == -1 && strings.Index(string(k), "_user_") == -1 {
+					fmt.Printf(
+						`-----Pattern: 0x%x
+Sample: %s
+`,
+						k,
+						v,
+					)
+				}
+				return nil
+			})
+		}
+		return nil
+	})
+}
+
+//Abnormals detected querties
+func Abnormals() {
+	initModel(
+		path.Join(config.Config.DBDir,
+			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
+
+	training.DBCon.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("abnormal"))
+		if b != nil {
+			return b.ForEach(func(k, v []byte) error {
+				var c sql.QueryContext
+				c.Unmarshal(v)
+				fmt.Printf("[%s] [User: %s] [Database: %s] %s\n",
+					c.Time.Format(time.RFC1123),
+					c.User,
+					c.Database,
+					c.Query)
+				return nil
+			})
+		}
+		return nil
 	})
 }
 
@@ -81,11 +113,37 @@ func postConfig() (err error) {
 	return
 }
 
+func mainListner() error {
+	if config.Config.HTTP {
+		logger.Infof("Web interface on https://%s/", config.Config.HTTPAddr)
+		go httpserver.Serve()
+	}
+	serverAddr, _ := net.ResolveTCPAddr("tcp", config.Config.TargetIP+":"+strconv.Itoa(int(config.Config.TargetPort)))
+	l, err := net.Listen("tcp", config.Config.ListenIP+":"+strconv.Itoa(int(config.Config.ListenPort)))
+	if err != nil {
+		return err
+	}
+	// Close the listener when the application closes.
+	defer l.Close()
+
+	for {
+		// Listen for an incoming connection.
+		listenConn, err := l.Accept()
+		if err != nil {
+			logger.Warningf("Error accepting connection: %v", err)
+			continue
+		}
+		go handleClient(listenConn, serverAddr)
+	}
+}
+
 //Start the proxy
 func Start() (err error) {
-	initModel()
+	initModel(
+		path.Join(config.Config.DBDir,
+			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
+
 	initLogging()
-	initSignal()
 	logger.Infof("Config file: %s", configFile)
 	logger.Infof("Listening: %s:%v",
 		config.Config.ListenIP,
@@ -95,30 +153,7 @@ func Start() (err error) {
 		config.Config.TargetIP,
 		config.Config.TargetPort)
 	logger.Infof("Protect: %v", !config.Config.Learning)
-
-	var listenConn net.Conn
-	if config.Config.HTTP {
-		logger.Infof("Web interface on https://%s/", config.Config.HTTPAddr)
-		go httpserver.Serve()
-	}
-	serverAddr, err := net.ResolveTCPAddr("tcp", config.Config.TargetIP+":"+strconv.Itoa(int(config.Config.TargetPort)))
-	if err != nil {
-		return
-	}
-	l, err := net.Listen("tcp", config.Config.ListenIP+":"+strconv.Itoa(int(config.Config.ListenPort)))
-	if err != nil {
-		return
-	}
-	// Close the listener when the application closes.
-	defer l.Close()
-
-	for {
-		// Listen for an incoming connection.
-		listenConn, err = l.Accept()
-		if err != nil {
-			logger.Warningf("Error accepting connection: %v", err)
-			continue
-		}
-		go handleClient(listenConn, serverAddr)
-	}
+	go mainListner()
+	signalHandler()
+	return nil
 }

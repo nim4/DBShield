@@ -2,7 +2,8 @@ package sql
 
 import (
 	"bytes"
-	"strconv"
+	"encoding/binary"
+	"sync"
 	"time"
 
 	"github.com/xwb1989/sqlparser"
@@ -18,57 +19,84 @@ type QueryContext struct {
 }
 
 //Unmarshal []byte into QueryContext
-func (c *QueryContext) Unmarshal(b []byte) (n int) {
-	n = bytes.IndexByte(b, 0x00)
+func (c *QueryContext) Unmarshal(b []byte) (size uint32) {
+	n := binary.BigEndian.Uint32(b)
+	b = b[4:]
+
 	c.Query = b[:n]
-	n++
+	size = n
 
-	i := bytes.IndexByte(b[n:], 0x00)
-	c.User = b[n : n+i]
-	n += i + 1
+	b = b[n:]
+	n = binary.BigEndian.Uint32(b)
+	b = b[4:]
+	c.User = b[:n]
+	size += n
 
-	i = bytes.IndexByte(b[n:], 0x00)
-	c.Client = b[n : n+i]
-	n += i + 1
+	b = b[n:]
+	n = binary.BigEndian.Uint32(b)
+	b = b[4:]
+	c.Client = b[:n]
+	size += n
 
-	i = bytes.IndexByte(b[n:], 0x00)
-	c.Database = b[n : n+i]
-	n += i
+	b = b[n:]
+	n = binary.BigEndian.Uint32(b)
+	b = b[4:]
+	c.Database = b[:n]
+	size += n
 
-	n += bytes.IndexByte(b[n:], 0x00)
 	c.Time.UnmarshalBinary(b[n:])
-	n += 8
+	size += 8
 	return
+}
+
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
 }
 
 //Marshal load []byte into QueryContext
-func (c *QueryContext) Marshal() (b []byte) {
+func (c *QueryContext) Marshal() []byte {
+	buf := bufPool.Get().(*bytes.Buffer)
+	defer bufPool.Put(buf)
+	buf.Reset()
+	l := make([]byte, 4)
+	binary.BigEndian.PutUint32(l, uint32(len(c.Query)))
+	buf.Write(l)
+	buf.Write(c.Query)
+
+	binary.BigEndian.PutUint32(l, uint32(len(c.User)))
+	buf.Write(l)
+	buf.Write(c.User)
+
+	binary.BigEndian.PutUint32(l, uint32(len(c.Client)))
+	buf.Write(l)
+	buf.Write(c.Client)
+
+	binary.BigEndian.PutUint32(l, uint32(len(c.Database)))
+	buf.Write(l)
+	buf.Write(c.Database)
+
 	t, _ := c.Time.MarshalBinary()
-	b = append(b, c.Query...)
-	b = append(b, 0x00)
-	b = append(b, c.User...)
-	b = append(b, 0x00)
-	b = append(b, c.Client...)
-	b = append(b, 0x00)
-	b = append(b, c.Database...)
-	b = append(b, 0x00)
-	b = append(b, t...)
-	return
+	buf.Write(t)
+	return buf.Bytes()
 }
 
 //Pattern returns pattern of given query
-func Pattern(query []byte) (pattern []byte) {
+func Pattern(query []byte) []byte {
 	tokenizer := sqlparser.NewStringTokenizer(string(query))
+	buf := bytes.Buffer{}
+	l := make([]byte, 4)
 	for {
 		typ, val := tokenizer.Scan()
 		switch typ {
 		case sqlparser.ID: //table, database, variable & ... names
-			pattern = append(pattern, val...)
+			buf.Write(val)
 		case 0: //End of query
-			return
+			return buf.Bytes()
 		default:
-			//because its 4x faster than "enconding/binary" (but 10x uglier)
-			pattern = append(pattern, []byte(strconv.Itoa(typ))...)
+			binary.BigEndian.PutUint32(l, uint32(typ))
+			buf.Write(l)
 		}
 	}
 }

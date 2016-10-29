@@ -2,6 +2,7 @@ package dbms
 
 import (
 	"bytes"
+	"io"
 	"net"
 )
 
@@ -10,10 +11,10 @@ const (
 )
 
 //ReadPacket all available data from socket
-func ReadPacket(conn net.Conn) ([]byte, error) {
-	buf := &bytes.Buffer{}
+func ReadPacket(conn io.Reader) ([]byte, error) {
+	data := make([]byte, chunkSize)
+	buf := bytes.Buffer{}
 	for {
-		data := make([]byte, chunkSize)
 		n, err := conn.Read(data)
 		if err != nil {
 			return nil, err
@@ -24,4 +25,16 @@ func ReadPacket(conn net.Conn) ([]byte, error) {
 		}
 	}
 	return buf.Bytes(), nil
+}
+
+func readWrite(src, dst net.Conn, reader func(io.Reader) ([]byte, error)) error {
+	//Read result from server
+	buf, err := reader(src)
+	if err != nil {
+		return err
+	}
+
+	//Send result to client
+	_, err = dst.Write(buf)
+	return err
 }

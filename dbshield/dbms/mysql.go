@@ -3,6 +3,7 @@ package dbms
 import (
 	"bytes"
 	"crypto/tls"
+	"io"
 	"net"
 	"time"
 
@@ -17,7 +18,7 @@ type MySQL struct {
 	certificate tls.Certificate
 	currentDB   []byte
 	username    []byte
-	reader      func(net.Conn) ([]byte, error)
+	reader      func(io.Reader) ([]byte, error)
 }
 
 //SetCertificate to use if client asks for SSL
@@ -27,7 +28,7 @@ func (m *MySQL) SetCertificate(crt, key string) (err error) {
 }
 
 //SetReader function for sockets IO
-func (m *MySQL) SetReader(f func(net.Conn) ([]byte, error)) {
+func (m *MySQL) SetReader(f func(io.Reader) ([]byte, error)) {
 	m.reader = f
 }
 
@@ -39,6 +40,7 @@ func (m *MySQL) SetSockets(c, s net.Conn) {
 
 //Close sockets
 func (m *MySQL) Close() {
+	defer handlePanic()
 	m.client.Close()
 	m.server.Close()
 }
@@ -51,6 +53,7 @@ func (m *MySQL) DefaultPort() uint {
 //Handler gets incoming requests
 func (m *MySQL) Handler() error {
 	defer handlePanic()
+	defer m.Close()
 
 	success, err := m.handleLogin()
 	if err != nil {
@@ -73,7 +76,7 @@ func (m *MySQL) Handler() error {
 			return nil
 		case 0x02: //UseDB
 			m.currentDB = data[1:]
-			logger.Infof("Using database: %v", m.currentDB)
+			logger.Debugf("Using database: %v", m.currentDB)
 		case 0x03: //Query
 			query := data[1:]
 			context := sql.QueryContext{
@@ -109,26 +112,6 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	if err != nil {
 		return
 	}
-	/* Extra Info
-	data := buf[4:]
-	nullByteIndex := bytes.IndexByte(data[1:], 0x00)
-	logger.Infof("Version: %s", data[1:nullByteIndex+1])
-	pos := 1 + nullByteIndex + 1 + 4
-	// first part of the password cipher [8 bytes]
-	cipher := make([]byte, 20)
-	copy(cipher, data[pos:pos+8])
-	pos += 8 + 1 + 2 + 1 + 2 + 2 + 1 + 10
-	cipher = append(cipher[:8], data[pos:pos+12]...)
-	logger.Debugf("Cipher: 0x%x", cipher)
-	if err != nil {
-		return
-	}*/
-
-	//Send Server Greeting to client
-	// _, err = m.client.Write(buf)
-	// if err != nil {
-	// 	return
-	// }
 
 	//Receive Login Request
 	buf, err := m.reader(m.client)
@@ -137,7 +120,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	}
 	data := buf[4:]
 
-	m.username, _, m.currentDB = getUsernameHashDB(data)
+	m.username, m.currentDB = getUsernameDB(data)
 
 	//check if ssl is required
 	ssl := (data[1] & 0x08) == 0x08
@@ -155,7 +138,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 			return
 		}
 		data = buf[4:]
-		m.username, _, m.currentDB = getUsernameHashDB(data)
+		m.username, m.currentDB = getUsernameDB(data)
 
 		//Send Login Request
 		_, err = m.server.Write(buf)
@@ -201,7 +184,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	return
 }
 
-func getUsernameHashDB(data []byte) (username []byte, hash []byte, db []byte) {
+func getUsernameDB(data []byte) (username, db []byte) {
 	if len(data) < 33 {
 		return
 	}
@@ -209,15 +192,12 @@ func getUsernameHashDB(data []byte) (username []byte, hash []byte, db []byte) {
 
 	nullByteIndex := bytes.IndexByte(data[pos:], 0x00)
 	username = data[pos : nullByteIndex+pos]
-	logger.Infof("Username: %s", username)
-	pos += nullByteIndex + 2
-	hash = data[pos : pos+20]
-	logger.Infof("Hash: %x", data[pos:pos+20])
-	pos += 20
+	logger.Debugf("Username: %s", username)
+	pos += nullByteIndex + 22
 	nullByteIndex = bytes.IndexByte(data[pos:], 0x00)
 	if nullByteIndex != 0 {
 		db = data[pos : nullByteIndex+pos]
-		logger.Infof("Database: %s", db)
+		logger.Debugf("Database: %s", db)
 	}
 	return
 }

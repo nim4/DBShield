@@ -300,7 +300,7 @@ func threeByteBigEndianToInt(data []byte) uint {
 
 //processContext will handle context depending on running mode
 func processContext(context sql.QueryContext) (err error) {
-	logger.Infof("Query: %s", context.Query)
+	logger.Debugf("Query: %s", context.Query)
 
 	if config.Config.Learning {
 		return training.AddToTrainingSet(context)
@@ -330,16 +330,4 @@ func turnSSL(client net.Conn, server net.Conn, certificate tls.Certificate) (net
 	}
 	logger.Debug("Server handshake done")
 	return tlsConnClient, tlsConnServer, nil
-}
-
-func readWrite(src, dst net.Conn, reader func(net.Conn) ([]byte, error)) error {
-	//Read result from server
-	buf, err := reader(src)
-	if err != nil {
-		return err
-	}
-
-	//Send result to client
-	_, err = dst.Write(buf)
-	return err
 }
