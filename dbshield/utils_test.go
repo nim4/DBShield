@@ -10,12 +10,6 @@ import (
 	"github.com/nim4/mock"
 )
 
-func TestInitModel(t *testing.T) {
-	config.Config.DBDir = os.TempDir()
-	config.Config.DBType = "mysql"
-	initModel()
-}
-
 func TestDbNameToStruct(t *testing.T) {
 	_, err := dbNameToStruct("db2")
 	if err != nil {
@@ -87,5 +81,4 @@ func TestCloseHandlers(t *testing.T) {
 		}
 	}()
 	closeHandlers()
-
 }

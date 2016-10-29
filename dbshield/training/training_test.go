@@ -2,6 +2,7 @@ package training_test
 
 import (
 	"io/ioutil"
+	"log"
 	"testing"
 	"time"
 
@@ -10,21 +11,25 @@ import (
 	"github.com/nim4/DBShield/dbshield/training"
 )
 
-func TestMain(t *testing.T) {
+func TestMain(m *testing.M) {
+	log.SetOutput(ioutil.Discard) // Avoid log outputs
 	tmpfile, err := ioutil.TempFile("", "testdb")
 	if err != nil {
 		panic(err)
 	}
 	defer tmpfile.Close()
 	path := tmpfile.Name()
-	training.DBConLearning, err = bolt.Open(path, 0600, nil)
+	training.DBCon, err = bolt.Open(path, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
-	training.DBConProtect, err = bolt.Open(path+"2", 0600, nil)
-	if err != nil {
-		panic(err)
-	}
+	training.DBCon.Update(func(tx *bolt.Tx) error {
+		tx.CreateBucket([]byte("pattern"))
+		tx.CreateBucket([]byte("abnormal"))
+		tx.CreateBucket([]byte("state"))
+		return nil
+	})
+	m.Run()
 }
 
 func TestAddToTrainingSet(t *testing.T) {
@@ -40,7 +45,22 @@ func TestAddToTrainingSet(t *testing.T) {
 	if err != nil {
 		t.Error("Not Expected error", err)
 	}
-	err = training.AddToTrainingSet(sql.QueryContext{})
+
+	tmpCon := training.DBCon
+	defer func() {
+		training.DBCon = tmpCon
+	}()
+	tmpfile, err := ioutil.TempFile("", "testdb")
+	if err != nil {
+		panic(err)
+	}
+	defer tmpfile.Close()
+	path := tmpfile.Name()
+	training.DBCon, err = bolt.Open(path, 0600, nil)
+	if err != nil {
+		panic(err)
+	}
+	err = training.AddToTrainingSet(c)
 	if err == nil {
 		t.Error("Expected error")
 	}
@@ -69,9 +89,9 @@ func TestCheckQuery(t *testing.T) {
 		t.Error("Expected true")
 	}
 
-	tmpCon := training.DBConLearning
+	tmpCon := training.DBCon
 	defer func() {
-		training.DBConLearning = tmpCon
+		training.DBCon = tmpCon
 	}()
 	tmpfile, err := ioutil.TempFile("", "testdb")
 	if err != nil {
@@ -79,11 +99,33 @@ func TestCheckQuery(t *testing.T) {
 	}
 	defer tmpfile.Close()
 	path := tmpfile.Name()
-	training.DBConLearning, err = bolt.Open(path, 0600, nil)
+	training.DBCon, err = bolt.Open(path, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
-	if training.CheckQuery(c1) {
-		t.Error("Expected false")
+	training.DBCon.Update(func(tx *bolt.Tx) error {
+		tx.CreateBucket([]byte("pattern"))
+		return err
+	})
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Expected panic")
+		}
+	}()
+	training.CheckQuery(c1)
+}
+
+func BenchmarkAddToTrainingSet(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	c := sql.QueryContext{
+		Query:    []byte("select * from test;"),
+		Database: []byte("test"),
+		User:     []byte("test"),
+		Client:   []byte("127.0.0.1"),
+		Time:     time.Now(),
+	}
+	for i := 0; i < b.N; i++ {
+		training.AddToTrainingSet(c)
 	}
 }

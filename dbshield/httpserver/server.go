@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/boltdb/bolt"
 	"github.com/gorilla/securecookie"
 	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/training"
@@ -32,6 +31,7 @@ func serve() {
 //Serve HTTPS
 func Serve() error {
 	singleHTTP.Do(serve)
+	//return http.ListenAndServe(config.Config.HTTPAddr, nil)
 	return http.ListenAndServeTLS(config.Config.HTTPAddr, config.Config.TLSCertificate, config.Config.TLSPrivateKey, nil)
 }
 
@@ -49,29 +49,12 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	if !checkLogin(r) {
 		return
 	}
-	abnormal := 0
-	total := 0
-
-	//Count queries
-	training.DBConLearning.View(func(tx *bolt.Tx) error {
-		return tx.ForEach(func(name []byte, b *bolt.Bucket) error {
-			total += b.Stats().KeyN
-			return nil
-		})
-	})
-	//Count abnormal
-	training.DBConProtect.View(func(tx *bolt.Tx) error {
-		return tx.ForEach(func(name []byte, b *bolt.Bucket) error {
-			abnormal += b.Stats().KeyN
-			return nil
-		})
-	})
 	out, _ := json.Marshal(struct {
-		Total    int
-		Abnormal int
+		Total    uint64
+		Abnormal uint64
 	}{
-		total,
-		abnormal,
+		training.QueryCounter,
+		training.AbnormalCounter,
 	})
 	w.Write(out)
 }

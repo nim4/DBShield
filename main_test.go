@@ -8,15 +8,11 @@ import (
 	"testing"
 )
 
-func Test(t *testing.T) {
+func TestEveryThing(t *testing.T) {
 	usage(true)
 
 	//
 	os.Args = []string{os.Args[0], "-k", "-c", "conf/dbshield.yml"}
-	main()
-
-	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	os.Args = []string{os.Args[0], "-k", "-c", "conf/invalid.yml"}
 	main()
 
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -25,6 +21,10 @@ func Test(t *testing.T) {
 
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	os.Args = []string{os.Args[0], "-l", "-c", "conf/dbshield.yml"}
+	main()
+
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	os.Args = []string{os.Args[0], "-a", "-c", "conf/dbshield.yml"}
 	main()
 
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)

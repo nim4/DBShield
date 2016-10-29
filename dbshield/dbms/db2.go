@@ -3,6 +3,7 @@ package dbms
 import (
 	"bytes"
 	"crypto/tls"
+	"io"
 	"net"
 	"time"
 
@@ -17,7 +18,7 @@ type DB2 struct {
 	certificate tls.Certificate
 	currentDB   []byte
 	username    []byte
-	reader      func(net.Conn) ([]byte, error)
+	reader      func(io.Reader) ([]byte, error)
 }
 
 //SetCertificate to use if client asks for SSL
@@ -27,18 +28,20 @@ func (d *DB2) SetCertificate(crt, key string) (err error) {
 }
 
 //SetReader function for sockets IO
-func (d *DB2) SetReader(f func(net.Conn) ([]byte, error)) {
+func (d *DB2) SetReader(f func(io.Reader) ([]byte, error)) {
 	d.reader = f
 }
 
 //SetSockets for dbms (client and server sockets)
 func (d *DB2) SetSockets(c, s net.Conn) {
+	defer handlePanic()
 	d.client = c
 	d.server = s
 }
 
 //Close sockets
 func (d *DB2) Close() {
+	defer handlePanic()
 	d.client.Close()
 	d.server.Close()
 }
@@ -50,7 +53,9 @@ func (d *DB2) DefaultPort() uint {
 
 //Handler gets incoming requests
 func (d *DB2) Handler() (err error) {
-	//defer handlePanic()
+	defer handlePanic()
+	defer d.Close()
+
 	success, err := d.handleLogin()
 	if err != nil {
 		return

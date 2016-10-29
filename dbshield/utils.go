@@ -1,12 +1,12 @@
 package dbshield
 
 import (
+	"encoding/binary"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/signal"
-	"path"
 	"strings"
 	"time"
 
@@ -19,63 +19,69 @@ import (
 )
 
 //initial boltdb database
-func initModel() {
-	var err error
-	path := path.Join(config.Config.DBDir, config.Config.TargetIP+"_"+config.Config.DBType)
+func initModel(path string) {
 	logger.Infof("Internal DB: %s", path)
-	if training.DBConLearning == nil {
-		training.DBConLearning, err = bolt.Open(path+"_learning.db", 0600, nil)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	if training.DBConProtect == nil {
-		training.DBConProtect, err = bolt.Open(path+"_abnormal.db", 0600, nil)
-		if err != nil {
-			panic(err)
-		}
+	if training.DBCon == nil {
+		training.DBCon, _ = bolt.Open(path, 0600, nil)
+		training.DBCon.Update(func(tx *bolt.Tx) error {
+			tx.CreateBucketIfNotExists([]byte("pattern"))
+			tx.CreateBucketIfNotExists([]byte("abnormal"))
+			b, _ := tx.CreateBucketIfNotExists([]byte("state"))
+			v := b.Get([]byte("QueryCounter"))
+			if v != nil {
+				training.QueryCounter = binary.BigEndian.Uint64(v)
+			}
+			v = b.Get([]byte("AbnormalCounter"))
+			if v != nil {
+				training.AbnormalCounter = binary.BigEndian.Uint64(v)
+			}
+			return nil
+		})
 	}
 
 	if config.Config.SyncInterval != 0 {
-		training.DBConLearning.NoSync = true
-		training.DBConProtect.NoSync = true
+		training.DBCon.NoSync = true
 		ticker := time.NewTicker(time.Second * time.Duration(config.Config.SyncInterval))
 		go func() {
 			for range ticker.C {
-				training.DBConLearning.Sync()
-				training.DBConProtect.Sync()
+				training.DBCon.Sync()
 			}
 		}()
 	}
 }
 
 func closeHandlers() {
-	if training.DBConLearning != nil {
-		training.DBConLearning.Sync()
-		training.DBConLearning.Close()
-	}
-	if training.DBConProtect != nil {
-		training.DBConProtect.Sync()
-		training.DBConProtect.Close()
+	if training.DBCon != nil {
+		training.DBCon.Update(func(tx *bolt.Tx) error {
+			//Supplied value must remain valid for the life of the transaction
+			qCount := make([]byte, 8)
+			abCount := make([]byte, 8)
+
+			b := tx.Bucket([]byte("state"))
+			binary.BigEndian.PutUint64(qCount, training.QueryCounter)
+			b.Put([]byte("QueryCounter"), qCount)
+
+			binary.BigEndian.PutUint64(abCount, training.AbnormalCounter)
+			b.Put([]byte("AbnormalCounter"), abCount)
+
+			return nil
+		})
+		training.DBCon.Sync()
+		training.DBCon.Close()
 	}
 	if logger.Output != nil {
 		logger.Output.Close()
 	}
-	// pprof.StopCPUProfile()
 }
 
 //catching Interrupts
-func initSignal() {
+func signalHandler() {
 	term := make(chan os.Signal)
 	signal.Notify(term, os.Interrupt)
-	go func() {
-		<-term
-		logger.Info("Shutting down...")
-		//Closing open handler politely
-		closeHandlers()
-		os.Exit(0)
-	}()
+	<-term
+	logger.Info("Shutting down...")
+	//Closing open handler politely
+	closeHandlers()
 }
 
 //initLogging redirect log output to file/stdout/stderr
@@ -114,16 +120,15 @@ func dbNameToStruct(db string) (d utils.DBMS, err error) {
 }
 
 func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
-	db := config.Config.DB
-	logger.Infof("Connected from: %s", listenConn.RemoteAddr())
+	db := utils.GenerateDBMS(config.Config.DB)
+	logger.Debugf("Connected from: %s", listenConn.RemoteAddr())
 	serverConn, err := net.DialTCP("tcp", nil, serverAddr)
 	if err != nil {
 		logger.Warning(err)
 		listenConn.Close()
 		return err
 	}
-	logger.Infof("Connected to: %s", serverConn.RemoteAddr())
-	defer db.Close()
+	logger.Debugf("Connected to: %s", serverConn.RemoteAddr())
 	db.SetSockets(listenConn, serverConn)
 	db.SetReader(dbms.ReadPacket)
 	err = db.Handler()

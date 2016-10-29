@@ -3,7 +3,9 @@ package dbms
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"io/ioutil"
+	"log"
 	"net"
 	"testing"
 	"time"
@@ -15,21 +17,25 @@ import (
 	"github.com/nim4/mock"
 )
 
-func TestMain(t *testing.T) {
+func TestMain(m *testing.M) {
+	log.SetOutput(ioutil.Discard) // Avoid log outputs
 	tmpfile, err := ioutil.TempFile("", "testdb")
 	if err != nil {
 		panic(err)
 	}
 	defer tmpfile.Close()
 	path := tmpfile.Name()
-	training.DBConLearning, err = bolt.Open(path, 0600, nil)
+	training.DBCon, err = bolt.Open(path, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
-	training.DBConProtect, err = bolt.Open(path+"2", 0600, nil)
-	if err != nil {
-		panic(err)
-	}
+	training.DBCon.Update(func(tx *bolt.Tx) error {
+		tx.CreateBucket([]byte("pattern"))
+		tx.CreateBucket([]byte("abnormal"))
+		tx.CreateBucket([]byte("state"))
+		return nil
+	})
+	m.Run()
 }
 
 func TestEbc2asc(t *testing.T) {
@@ -89,10 +95,7 @@ func TestTurnSSL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	mock.ReturnError(true)
-	defer mock.ReturnError(false)
-	var s mock.ConnMock
+	var s = mock.ConnMock{Error: errors.New("Dummy Error")}
 	_, _, err = turnSSL(s, s, cert)
 	if err == nil {
 		t.Error("Expected error")

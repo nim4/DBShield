@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/binary"
+	"io"
 	"net"
 	"strings"
 	"time"
@@ -19,7 +20,7 @@ type Postgres struct {
 	certificate tls.Certificate
 	currentDB   []byte
 	username    []byte
-	reader      func(net.Conn) ([]byte, error)
+	reader      func(io.Reader) ([]byte, error)
 }
 
 //SetCertificate to use if client asks for SSL
@@ -29,18 +30,20 @@ func (p *Postgres) SetCertificate(crt, key string) (err error) {
 }
 
 //SetReader function for sockets IO
-func (p *Postgres) SetReader(f func(net.Conn) ([]byte, error)) {
+func (p *Postgres) SetReader(f func(io.Reader) ([]byte, error)) {
 	p.reader = f
 }
 
 //SetSockets for dbms (client and server sockets)
 func (p *Postgres) SetSockets(c, s net.Conn) {
+	defer handlePanic()
 	p.client = c
 	p.server = s
 }
 
 //Close sockets
 func (p *Postgres) Close() {
+	defer handlePanic()
 	p.client.Close()
 	p.server.Close()
 }
@@ -53,6 +56,8 @@ func (p *Postgres) DefaultPort() uint {
 //Handler gets incoming requests
 func (p *Postgres) Handler() (err error) {
 	defer handlePanic()
+	defer p.Close()
+
 	success, err := p.handleLogin()
 	if err != nil {
 		return
@@ -148,7 +153,7 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 		data = data[nullByteIndex+1:]
 	}
 	for key := range payload {
-		logger.Infof("%s: %s", strings.Title(key), payload[key])
+		logger.Debugf("%s: %s", strings.Title(key), payload[key])
 	}
 	p.username = payload["user"]
 	p.currentDB = payload["database"]
