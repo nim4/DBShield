@@ -18,6 +18,13 @@ import (
 	"github.com/nim4/DBShield/dbshield/utils"
 )
 
+const (
+	mysql = iota
+	postgres
+	db2
+	oracle
+)
+
 //initial boltdb database
 func initModel(path string) {
 	logger.Infof("Internal DB: %s", path)
@@ -41,7 +48,7 @@ func initModel(path string) {
 
 	if config.Config.SyncInterval != 0 {
 		training.DBCon.NoSync = true
-		ticker := time.NewTicker(time.Second * time.Duration(config.Config.SyncInterval))
+		ticker := time.NewTicker(config.Config.SyncInterval)
 		go func() {
 			for range ticker.C {
 				training.DBCon.Sync()
@@ -103,24 +110,40 @@ func initLogging() {
 }
 
 //maps database name to corresponding struct
-func dbNameToStruct(db string) (d utils.DBMS, err error) {
+func dbNameToStruct(db string) (d uint, err error) {
 	switch strings.ToLower(db) {
 	case "db2":
-		d = &dbms.DB2{}
+		d = db2
 	case "mysql", "mariadb":
-		d = &dbms.MySQL{}
+		d = mysql
 	case "oracle":
-		d = &dbms.Oracle{}
+		d = oracle
 	case "postgres":
-		d = &dbms.Postgres{}
+		d = postgres
 	default:
 		err = fmt.Errorf("Unknown DBMS: %s", db)
 	}
 	return
 }
 
+//generateDBMS instantiate a new instance of DBMS
+func generateDBMS() utils.DBMS {
+	switch config.Config.DB {
+	case mysql:
+		return new(dbms.MySQL)
+	case postgres:
+		return new(dbms.Postgres)
+	case oracle:
+		return new(dbms.Oracle)
+	case db2:
+		return new(dbms.DB2)
+	default:
+		return nil
+	}
+}
+
 func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
-	db := utils.GenerateDBMS(config.Config.DB)
+	d := generateDBMS()
 	logger.Debugf("Connected from: %s", listenConn.RemoteAddr())
 	serverConn, err := net.DialTCP("tcp", nil, serverAddr)
 	if err != nil {
@@ -129,9 +152,10 @@ func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 		return err
 	}
 	logger.Debugf("Connected to: %s", serverConn.RemoteAddr())
-	db.SetSockets(listenConn, serverConn)
-	db.SetReader(dbms.ReadPacket)
-	err = db.Handler()
+	d.SetSockets(listenConn, serverConn)
+	d.SetCertificate(config.Config.TLSCertificate, config.Config.TLSPrivateKey)
+	d.SetReader(dbms.ReadPacket)
+	err = d.Handler()
 	if err != nil {
 		logger.Warning(err)
 	}

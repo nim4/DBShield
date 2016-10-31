@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/utils"
@@ -28,7 +29,7 @@ type Configurations struct {
 	LogPath  string
 
 	DBType string
-	DB     utils.DBMS `json:"-"`
+	DB     uint `json:"-"`
 
 	DBDir string
 
@@ -48,7 +49,7 @@ type Configurations struct {
 	Action     string
 	ActionFunc func() error `json:"-"`
 
-	SyncInterval uint
+	SyncInterval time.Duration
 	//Key-> database.table.column
 	//Masks map[string]mask
 }
@@ -144,9 +145,11 @@ func configGeneral() (err error) {
 
 	Config.ListenIP = strConfigDefualt("listenIP", "0.0.0.0")
 
-	Config.SyncInterval, err = intConfig("syncInterval", 5, 0)
-	if err != nil {
-		return err
+	if syn := viper.GetString("syncInterval"); syn != "" {
+		Config.SyncInterval, err = time.ParseDuration(syn)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -185,7 +188,7 @@ func configProtect() error {
 func configLog() error {
 	var err error
 	Config.LogPath = strConfigDefualt("logPath", "stderr")
-	Config.LogLevel, err = intConfig("logLevel", 1, 0)
+	Config.LogLevel, err = intConfig("logLevel", 3, 0)
 	return err
 }
 

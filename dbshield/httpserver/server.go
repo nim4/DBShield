@@ -31,8 +31,8 @@ func serve() {
 //Serve HTTPS
 func Serve() error {
 	singleHTTP.Do(serve)
-	//return http.ListenAndServe(config.Config.HTTPAddr, nil)
-	return http.ListenAndServeTLS(config.Config.HTTPAddr, config.Config.TLSCertificate, config.Config.TLSPrivateKey, nil)
+	return http.ListenAndServe(config.Config.HTTPAddr, nil)
+	//return http.ListenAndServeTLS(config.Config.HTTPAddr, config.Config.TLSCertificate, config.Config.TLSPrivateKey, nil)
 }
 
 //mainHandler for html
