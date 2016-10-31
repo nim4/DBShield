@@ -58,8 +58,21 @@ func TestPascalString(t *testing.T) {
 func TestRemoteAddrToIP(t *testing.T) {
 	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:80")
 	ip := remoteAddrToIP(addr)
-	if bytes.Compare(ip, []byte("127.0.0.1")) != 0 {
-		t.Error("Expected '127.0.0.1', got ", ip)
+	if bytes.Compare(ip, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 127, 0, 0, 1}) != 0 {
+		t.Errorf("Expected '127.0.0.1', got %d", ip)
+	}
+
+	addr, _ = net.ResolveTCPAddr("tcp", "[fe80::ee0e:c4ff:fe22:7105]:80")
+	ip = remoteAddrToIP(addr)
+	if bytes.Compare(ip, []byte{0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xee, 0x0e, 0xc4, 0xff, 0xfe, 0x22, 0x71, 0x05}) != 0 {
+		t.Errorf("Expected 'fe80::ee0e:c4ff:fe22', got %x", ip)
+	}
+}
+
+func BenchmarkRemoteAddrToIP(b *testing.B) {
+	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:80")
+	for i := 0; i < b.N; i++ {
+		remoteAddrToIP(addr)
 	}
 }
 

@@ -21,7 +21,7 @@ import (
 )
 
 //Version of the library
-var Version = "1.0.0-beta3"
+var Version = "1.0.0-beta4"
 
 var configFile string
 
@@ -99,16 +99,12 @@ func postConfig() (err error) {
 		return err
 	}
 
+	tmpDBMS := generateDBMS()
 	if config.Config.ListenPort == 0 {
-		config.Config.ListenPort = config.Config.DB.DefaultPort()
+		config.Config.ListenPort = tmpDBMS.DefaultPort()
 	}
 	if config.Config.TargetPort == 0 {
-		config.Config.TargetPort = config.Config.DB.DefaultPort()
-	}
-
-	err = config.Config.DB.SetCertificate(config.Config.TLSCertificate, config.Config.TLSPrivateKey)
-	if err != nil {
-		return
+		config.Config.TargetPort = tmpDBMS.DefaultPort()
 	}
 	return
 }

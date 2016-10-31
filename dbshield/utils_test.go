@@ -84,3 +84,35 @@ func TestCloseHandlers(t *testing.T) {
 	}()
 	closeHandlers()
 }
+
+func TestGenerateDBMS(t *testing.T) {
+	config.Config.DB = 1
+	v := generateDBMS()
+	if v == nil {
+		t.Error("Got nil")
+	}
+
+	config.Config.DB++
+	v = generateDBMS()
+	if v == nil {
+		t.Error("Got nil")
+	}
+
+	config.Config.DB++
+	v = generateDBMS()
+	if v == nil {
+		t.Error("Got nil")
+	}
+
+	config.Config.DB++
+	v = generateDBMS()
+	if v == nil {
+		t.Error("Got nil")
+	}
+
+	config.Config.DB++
+	v = generateDBMS()
+	if v != nil {
+		t.Error("Expected nil")
+	}
+}

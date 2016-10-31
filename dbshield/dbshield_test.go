@@ -51,12 +51,6 @@ func TestPostConfig(t *testing.T) {
 	if err != nil {
 		t.Error("Expected nil got ", err)
 	}
-
-	config.Config.TLSCertificate = os.TempDir()
-	err = postConfig()
-	if err == nil {
-		t.Error("Expected error")
-	}
 }
 
 func TestEveryThing(t *testing.T) {

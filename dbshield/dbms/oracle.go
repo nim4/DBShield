@@ -1,10 +1,10 @@
 package dbms
 
 import (
+	"bytes"
 	"crypto/tls"
 	"io"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/nim4/DBShield/dbshield/logger"
@@ -70,9 +70,9 @@ func (o *Oracle) Handler() error {
 
 			//Extracting Service name
 			// FIXME: avoid string
-			tmp1 := strings.Split(string(connectData), "SERVICE_NAME=")
-			tmp2 := strings.Split(tmp1[1], ")")
-			o.currentDB = []byte(tmp2[0])
+			tmp1 := bytes.Split(connectData, []byte("SERVICE_NAME="))
+			tmp2 := bytes.Split(tmp1[1], []byte{0x29}) // )
+			o.currentDB = tmp2[0]
 
 			logger.Debugf("Connect Data: %s", connectData)
 			logger.Debugf("Service Name: %s", o.currentDB)

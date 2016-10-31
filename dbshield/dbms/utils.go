@@ -283,9 +283,8 @@ func pascalString(data []byte) (b []byte, size uint) {
 	return
 }
 
-// FIXME: Avoid String()
 func remoteAddrToIP(addr net.Addr) []byte {
-	return []byte(addr.(*net.TCPAddr).IP.String())
+	return addr.(*net.TCPAddr).IP
 }
 
 func handlePanic() {
@@ -312,7 +311,7 @@ func processContext(context sql.QueryContext) (err error) {
 }
 
 func turnSSL(client net.Conn, server net.Conn, certificate tls.Certificate) (net.Conn, net.Conn, error) {
-	logger.Info("SSL connection")
+	logger.Debugf("SSL connection")
 	tlsConnClient := tls.Server(client, &tls.Config{
 		Certificates:       []tls.Certificate{certificate},
 		InsecureSkipVerify: true,

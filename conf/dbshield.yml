@@ -30,8 +30,9 @@ tlsCertificate: cert/server-cert.pem
 # Directory to save internal database(default: in model directory under OS's temp directory)
 dbDir: "/tmp/model/"
 
-# Sync internal database against the disk every n(default: 5) second (0 will force sync after each commit)
-SyncInterval: 5
+# Databasse synchronisation interval, 0 will force sync after each commit.
+# Valid units are "ns", "us" (or "µs"), "ms", "s", "m" and "h". (default: 5s)
+SyncInterval: 5s
 
 #############################
 ### HTTP Service          ###
@@ -72,11 +73,11 @@ additionalChecks:  user,source
 #############################
 
 # Log depth
-# possible values:
-#       0   warning
-#       1   warning + info (default)
-#       2   warning + info + debug
-logLevel: 1
+#       1   warning
+#       2   info
+#       4   debug
+# default: 3 (warning + info)
+logLevel: 3
 
 # Log path
 # possible values:
