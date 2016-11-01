@@ -39,16 +39,6 @@ func TestDbNameToStruct(t *testing.T) {
 func TestInitLogging(t *testing.T) {
 	config.Config.LogPath = "stdout"
 	initLogging()
-	config.Config.LogPath = "stderr"
-	initLogging()
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Expected panic")
-		}
-	}()
-	config.Config.LogPath = os.TempDir()
-	initLogging()
 }
 
 func TestHandleClient(t *testing.T) {
@@ -86,7 +76,7 @@ func TestCloseHandlers(t *testing.T) {
 }
 
 func TestGenerateDBMS(t *testing.T) {
-	config.Config.DB = 1
+	config.Config.DB = 0
 	v := generateDBMS()
 	if v == nil {
 		t.Error("Got nil")
@@ -110,7 +100,7 @@ func TestGenerateDBMS(t *testing.T) {
 		t.Error("Got nil")
 	}
 
-	config.Config.DB++
+	config.Config.DB = 100
 	v = generateDBMS()
 	if v != nil {
 		t.Error("Expected nil")

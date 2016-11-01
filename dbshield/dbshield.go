@@ -111,7 +111,11 @@ func postConfig() (err error) {
 
 func mainListner() error {
 	if config.Config.HTTP {
-		logger.Infof("Web interface on https://%s/", config.Config.HTTPAddr)
+		proto := "http"
+		if config.Config.HTTPSSL {
+			proto = "https"
+		}
+		logger.Infof("Web interface on %s://%s/", proto, config.Config.HTTPAddr)
 		go httpserver.Serve()
 	}
 	serverAddr, _ := net.ResolveTCPAddr("tcp", config.Config.TargetIP+":"+strconv.Itoa(int(config.Config.TargetPort)))

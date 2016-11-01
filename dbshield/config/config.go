@@ -43,6 +43,7 @@ type Configurations struct {
 	TLSCertificate string
 
 	HTTP         bool
+	HTTPSSL      bool
 	HTTPAddr     string
 	HTTPPassword string
 
@@ -201,6 +202,7 @@ func configHTTP() error {
 		if err != nil {
 			return err
 		}
+		Config.HTTPSSL = viper.GetBool("httpSSL")
 		Config.HTTPAddr = fmt.Sprintf("%s:%d", httpIP, httpPort)
 	}
 	return nil

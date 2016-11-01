@@ -37,8 +37,11 @@ SyncInterval: 5s
 #############################
 ### HTTP Service          ###
 #############################
-# Run http service(default: on)
-http: on
+# Run http interface(default: yes)
+http: yes
+
+# Serve https (default: yes)
+httpSSL: yes
 
 # IP address to listen on(default: 127.0.0.1)
 httpIP: 127.0.0.1

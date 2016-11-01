@@ -11,7 +11,6 @@ import (
 func TestEveryThing(t *testing.T) {
 	usage(true)
 
-	//
 	os.Args = []string{os.Args[0], "-k", "-c", "conf/dbshield.yml"}
 	main()
 
@@ -41,11 +40,16 @@ func TestEveryThing(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := os.TempDir() + "/tempconfig.yml"
-	dat = bytes.Replace(dat, []byte("dbDir: "), []byte("dbDir: "+path), 1)
+	dat = bytes.Replace(dat, []byte("logPath: "), []byte("logPath: "+os.TempDir()+" #"), 1)
 	err = ioutil.WriteFile(path, dat, 0600)
 	if err != nil {
 		t.Fatal(err)
 	}
-	os.Args = []string{os.Args[0], "-k", "-c", path}
+	os.Args = []string{os.Args[0], "-c", path}
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Expected panic")
+		}
+	}()
 	main()
 }
