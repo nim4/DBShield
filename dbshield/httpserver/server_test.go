@@ -47,6 +47,11 @@ func TestServe(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error")
 	}
+	config.Config.HTTPSSL = true
+	err = Serve()
+	if err == nil {
+		t.Error("Expected error")
+	}
 }
 
 func TestMainHandler(t *testing.T) {

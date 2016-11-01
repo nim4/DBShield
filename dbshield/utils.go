@@ -3,7 +3,6 @@ package dbshield
 import (
 	"encoding/binary"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -93,20 +92,10 @@ func signalHandler() {
 
 //initLogging redirect log output to file/stdout/stderr
 func initLogging() {
-	switch config.Config.LogPath {
-	case "stdout":
-		logger.Output = os.Stdout
-	case "stderr":
-		logger.Output = os.Stderr
-	default:
-		var err error
-		logger.Output, err = os.OpenFile(config.Config.LogPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			panic(fmt.Errorf("Error opening log file: %v", err))
-		}
+	err := logger.Init(config.Config.LogPath, config.Config.LogLevel)
+	if err != nil {
+		panic(err)
 	}
-	log.SetOutput(logger.Output)
-	logger.Level = config.Config.LogLevel
 }
 
 //maps database name to corresponding struct
