@@ -25,6 +25,7 @@ func main() {
 	showConfig := flag.Bool("k", false, "show parsed config and exit")
 	showVersion := flag.Bool("version", false, "show version")
 	showHelp := flag.Bool("h", false, "show help")
+	purge := flag.Bool("purge", false, "remove internal database")
 	//Parsing command line arguments
 	flag.Parse()
 
@@ -55,6 +56,11 @@ func main() {
 
 	if *showConfig {
 		dbshield.ShowConfig()
+		return
+	}
+
+	if *purge {
+		dbshield.Purge()
 		return
 	}
 

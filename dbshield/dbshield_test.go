@@ -37,6 +37,14 @@ func TestShowConfig(t *testing.T) {
 	}
 }
 
+func TestPurge(t *testing.T) {
+	SetConfigFile("conf/dbshield.yml")
+	err := Purge()
+	if err == nil {
+		t.Error("Expected error")
+	}
+}
+
 func TestPostConfig(t *testing.T) {
 	SetConfigFile("conf/dbshield.yml")
 	config.Config.DBType = "Invalid"

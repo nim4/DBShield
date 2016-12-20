@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -40,6 +41,12 @@ func ShowConfig() error {
 	confJSON, err := json.MarshalIndent(config.Config, "", "    ")
 	fmt.Println(string(confJSON))
 	return err
+}
+
+//Purge local database
+func Purge() error {
+	return os.Remove(path.Join(config.Config.DBDir,
+		config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
 }
 
 //Patterns lists the captured patterns
