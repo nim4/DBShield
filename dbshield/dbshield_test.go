@@ -29,9 +29,9 @@ func TestSetConfigFile(t *testing.T) {
 	}
 }
 
-func TestCheck(t *testing.T) {
+func TestShowConfig(t *testing.T) {
 	SetConfigFile("conf/dbshield.yml")
-	err := Check()
+	err := ShowConfig()
 	if err != nil {
 		t.Error("Got error", err)
 	}

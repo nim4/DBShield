@@ -35,8 +35,8 @@ func SetConfigFile(cf string) error {
 	return postConfig()
 }
 
-//Check config file and writes it to STDUT
-func Check() error {
+//ShowConfig writes parsed config file as JSON to STDUT
+func ShowConfig() error {
 	confJSON, err := json.MarshalIndent(config.Config, "", "    ")
 	fmt.Println(string(confJSON))
 	return err
