@@ -1,4 +1,4 @@
-[![Linux & OS X](https://travis-ci.org/nim4/DBShield.svg?branch=master "Linux & OS X")](https://travis-ci.org/nim4/DBShield)
+[![Linux](https://travis-ci.org/nim4/DBShield.svg?branch=master "Linux")](https://travis-ci.org/nim4/DBShield)
 [![Windows](https://ci.appveyor.com/api/projects/status/github/nim4/DBShield?branch=master&svg=true "Windows")](https://ci.appveyor.com/project/nim4/DBShield/branch/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nim4/DBShield)](https://goreportcard.com/report/github.com/nim4/DBShield)
 [![codecov](https://codecov.io/gh/nim4/DBShield/branch/master/graph/badge.svg)](https://codecov.io/gh/nim4/DBShield)
@@ -17,7 +17,7 @@ For example, this is how web server normally interacts with database server:
 
 ![Sample Web Server and DB](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_01.png)
 
-By adding DBShield in front of database server we can protect it against abnormal queries. To detect abnormal queries we first run DBShield in learning mode. Learning mode lets any query pass but it records information about it (pattern, username, time and source) into internal database.
+By adding DBShield in front of database server we can protect it against abnormal queries. To detect abnormal queries we first run DBShield in learning mode. Learning mode lets any query pass but it records information about it (pattern, username, time and source) into the internal database.
 
 ![Learning mode](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_02.png)
 
@@ -26,6 +26,13 @@ After collecting enough patterns we can run DBShield in protect mode. Protect mo
 
 ![Protect mode](https://raw.githubusercontent.com/nim4/DBShield/master/misc/how_03.png)
 
+---
+## Demo
+For demo, we are using [sqlmap](https://github.com/sqlmapproject/sqlmap)(automatic SQL injection and database takeover tool) to exploit the SQL injection vulnerability at `user.php`
+
+In the first scenario, the sqlmap successfully exploits the SQL injection when web application connected directly to the database(MySQL), In the second scenario, we modify the `user.php` so DBShield gets between the web application and database which will drop the injection attempt and make sqlmap fail.
+
+![Demo](misc/demo.gif)
 ---
 
 ## Sample Outputs
@@ -58,76 +65,6 @@ $ go run main.go
 ![Web UI](https://raw.githubusercontent.com/nim4/DBShield/master/misc/graph.png)
 
 ---
-## Demo
-
-For testing we have a vulnerable page at `http://192.168.22.1/user.php`
-
-`user.php` contents:
-```php
-<?php
-include('config.php');
-// Create connection
-$conn = new mysqli($servername, $username, $password, "test");
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-if (!empty($_GET['id'])){
-  if ($result = $conn->query("SELECT * FROM Persons WHERE id=".$_GET['id'])) {
-    foreach($result as $k => $v){
-      echo "Name: <b>{$v['Name']}</b><br />City: <b>{$v['City']}</b>" ;
-    }
-    mysqli_free_result($result);
-  }
- }
-$conn->close();
-```
-
-We are using [sqlmap](https://github.com/sqlmapproject/sqlmap) for exploiting the vulnerability, result are as below:
-
-```
-$ sqlmap -u http://192.168.22.1/user.php?id=1
-```
-```
-[12:14:31] [INFO] GET parameter 'id' is 'Generic UNION query (NULL) - 1 to 20 columns' injectable
-GET parameter 'id' is vulnerable. Do you want to keep testing the others (if any)? [y/N]
-sqlmap identified the following injection point(s) with a total of 53 HTTP(s) requests:
----
-Parameter: id (GET)
-    Type: boolean-based blind
-    Title: AND boolean-based blind - WHERE or HAVING clause
-    Payload: id=1 AND 8909=8909
-
-    Type: AND/OR time-based blind
-    Title: MySQL >= 5.0.12 AND time-based blind (SELECT)
-    Payload: id=1 AND (SELECT * FROM (SELECT(SLEEP(5)))eIyW)
-
-    Type: UNION query
-    Title: Generic UNION query (NULL) - 3 columns
-    Payload: id=1 UNION ALL SELECT NULL,NULL,CONCAT(0x71786b7071,0x64666b56715965797a6e654141634c765a6575674b79686461476c5556766671584f74486c5a5a58,0x717a717a71)-- -
----
-[12:14:33] [INFO] the back-end DBMS is MySQL
-web server operating system: Linux Ubuntu
-web application technology: PHP 7.0.8
-back-end DBMS: MySQL 5.0.12
-```
-
-Then we try to exploiting it again using the same tool, this time DBShield is protecting the database:
-
-```
-$ sqlmap -u http://192.168.22.1/user.php?id=1
-```
-
-```
-[12:20:36] [INFO] testing 'Oracle AND time-based blind'
-[12:20:37] [INFO] testing 'Generic UNION query (NULL) - 1 to 10 columns'
-[12:20:37] [WARNING] using unescaped version of the test because of zero knowledge of the back-end DBMS. You can try to explicitly set it using option '--dbms'
-[12:20:43] [INFO] testing 'MySQL UNION query (NULL) - 1 to 10 columns'
-[12:20:47] [WARNING] GET parameter 'id' is not injectable
-```
----
 ## Installation
 
 Get it
@@ -135,26 +72,31 @@ Get it
 $ go get -u github.com/nim4/DBShield
 ```
 
-Then you can get help using "-h" argument:
+Then you can see help using "-h" argument:
 ```
 $ $GOPATH/bin/DBShield -h
-DBShield 1.0.0-beta2
+DBShield 1.0.0-beta3
 Usage of DBShield:
-  -c string
-    	Config file (default "/etc/dbshield.yml")
-  -d	Get list of captured patterns
-  -h	Show help
-  -k	Show parsed config and exit
+  -a	get list of abnormal queries
+  -c file
+      config file (default "/etc/dbshield.yml")
+  -h	show help
+  -k	show parsed config and exit
+  -l	get list of captured patterns
   -version
-    	Show version
-
+      show version
 ```
 
-and run it with your configuration like:
+and run it with your configuration, like:
 ```
 $ $GOPATH/bin/DBShield -c config.yml
 ```
 see [sample configuration  file](https://github.com/nim4/DBShield/blob/master/conf/dbshield.yml)
+
+
+>:warning: **WARNING:**
+> Do NOT use default certificates in production environments!
+
 
 ---
 ## Supports:
