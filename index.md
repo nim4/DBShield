@@ -5,12 +5,14 @@
 [![Dev chat](https://img.shields.io/badge/gitter-chat-20cc20.svg "Dev chat")](https://gitter.im/DBShield/Lobby)
 [![GoDoc](https://godoc.org/github.com/nim4/DBShield?status.svg)](https://godoc.org/github.com/nim4/DBShield)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nim4/DBShield/master/LICENSE)
+
 # DBShield
 
 Protects your data by inspecting incoming queries from your application server and rejecting abnormal ones.
 
 
 ---
+
 ## How it works?
 
 For example, this is how web server normally interacts with database server:
@@ -32,7 +34,7 @@ For demo, we are using [sqlmap](https://github.com/sqlmapproject/sqlmap)(automat
 
 In the first scenario, the sqlmap successfully exploits the SQL injection when web application connected directly to the database(MySQL), In the second scenario, we modify the `user.php` so DBShield gets between the web application and database which will drop the injection attempt and make sqlmap fail.
 
-![Demo](misc/demo.gif)
+![Demo](https://github.com/nim4/DBShield/raw/master/misc/demo.gif)
 ---
 
 ## Sample Outputs
