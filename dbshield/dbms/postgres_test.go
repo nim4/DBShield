@@ -90,15 +90,15 @@ func BenchmarkPostgres(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	var s mock.ConnMock
-	var m = dbms.Postgres{}
-	m.SetReader(postgresDummyReader)
-	m.SetSockets(s, s)
+	var p = dbms.Postgres{}
+	p.SetReader(postgresDummyReader)
+	p.SetSockets(s, s)
 	for i := 0; i < b.N; i++ {
 		postgresCount = 0
-		err := m.Handler()
+		err := p.Handler()
 		if err != nil {
 			b.Fatal(err)
 		}
-		m.Close()
+		p.Close()
 	}
 }

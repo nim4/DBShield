@@ -106,7 +106,7 @@ func postConfig() (err error) {
 		return err
 	}
 
-	tmpDBMS := generateDBMS()
+	tmpDBMS, _ := generateDBMS()
 	if config.Config.ListenPort == 0 {
 		config.Config.ListenPort = tmpDBMS.DefaultPort()
 	}

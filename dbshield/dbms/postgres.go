@@ -124,6 +124,9 @@ func (p *Postgres) handleLogin() (success bool, err error) {
 
 	if ssl {
 		p.client, p.server, err = turnSSL(p.client, p.server, p.certificate)
+		if err != nil {
+			return
+		}
 	}
 
 	//Receive username and database name

@@ -54,7 +54,6 @@ func (m *MySQL) DefaultPort() uint {
 func (m *MySQL) Handler() error {
 	defer handlePanic()
 	defer m.Close()
-
 	success, err := m.handleLogin()
 	if err != nil {
 		return err
@@ -66,7 +65,7 @@ func (m *MySQL) Handler() error {
 	for {
 		var buf []byte
 		buf, err = m.reader(m.client)
-		if err != nil {
+		if err != nil || len(buf) < 5 {
 			return err
 		}
 		data := buf[4:]
@@ -120,7 +119,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	}
 	data := buf[4:]
 
-	m.username, m.currentDB = getUsernameDB(data)
+	m.username, m.currentDB = GetUsernameDB(data)
 
 	//check if ssl is required
 	ssl := (data[1] & 0x08) == 0x08
@@ -132,13 +131,15 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	}
 	if ssl {
 		m.client, m.server, err = turnSSL(m.client, m.server, m.certificate)
-
+		if err != nil {
+			return
+		}
 		buf, err = m.reader(m.client)
 		if err != nil {
 			return
 		}
 		data = buf[4:]
-		m.username, m.currentDB = getUsernameDB(data)
+		m.username, m.currentDB = GetUsernameDB(data)
 
 		//Send Login Request
 		_, err = m.server.Write(buf)
@@ -184,7 +185,29 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	return
 }
 
-func getUsernameDB(data []byte) (username, db []byte) {
+//MySQLReadPacket handles decoding packet len and reading payload
+func MySQLReadPacket(src io.Reader) ([]byte, error) {
+	const maxPayloadLen = 1<<24 - 1
+
+	data := make([]byte, maxPayloadLen)
+	n, err := src.Read(data)
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+
+	if n < maxPayloadLen || err == io.EOF {
+		return data[:n], nil
+	}
+
+	buf, err := MySQLReadPacket(src)
+	if err != nil {
+		return nil, err
+	}
+	return append(data, buf...), nil
+}
+
+//GetUsernameDB parse packet and gets username and db name
+func GetUsernameDB(data []byte) (username, db []byte) {
 	if len(data) < 33 {
 		return
 	}
@@ -195,7 +218,11 @@ func getUsernameDB(data []byte) (username, db []byte) {
 	logger.Debugf("Username: %s", username)
 	pos += nullByteIndex + 22
 	nullByteIndex = bytes.IndexByte(data[pos:], 0x00)
-	if nullByteIndex != 0 {
+
+	//Check if DB name is selected
+	dbSelectedCheck := len(data) > nullByteIndex+pos+1
+
+	if nullByteIndex != 0 && dbSelectedCheck {
 		db = data[pos : nullByteIndex+pos]
 		logger.Debugf("Database: %s", db)
 	}

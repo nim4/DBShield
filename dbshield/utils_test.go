@@ -77,31 +77,31 @@ func TestCloseHandlers(t *testing.T) {
 
 func TestGenerateDBMS(t *testing.T) {
 	config.Config.DB = 0
-	v := generateDBMS()
+	v, _ := generateDBMS()
 	if v == nil {
 		t.Error("Got nil")
 	}
 
 	config.Config.DB++
-	v = generateDBMS()
+	v, _ = generateDBMS()
 	if v == nil {
 		t.Error("Got nil")
 	}
 
 	config.Config.DB++
-	v = generateDBMS()
+	v, _ = generateDBMS()
 	if v == nil {
 		t.Error("Got nil")
 	}
 
 	config.Config.DB++
-	v = generateDBMS()
+	v, _ = generateDBMS()
 	if v == nil {
 		t.Error("Got nil")
 	}
 
 	config.Config.DB = 100
-	v = generateDBMS()
+	v, _ = generateDBMS()
 	if v != nil {
 		t.Error("Expected nil")
 	}

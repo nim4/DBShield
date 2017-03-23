@@ -50,6 +50,8 @@ type Configurations struct {
 	Action     string
 	ActionFunc func() error `json:"-"`
 
+	Timeout time.Duration
+
 	SyncInterval time.Duration
 	//Key-> database.table.column
 	//Masks map[string]mask
@@ -146,11 +148,22 @@ func configGeneral() (err error) {
 
 	Config.ListenIP = strConfigDefualt("listenIP", "0.0.0.0")
 
+	if timeout := viper.GetString("timeout"); timeout != "" {
+		Config.Timeout, err = time.ParseDuration(timeout)
+		if err != nil {
+			return err
+		}
+	} else {
+		Config.Timeout = 5 * time.Second
+	}
+
 	if syn := viper.GetString("syncInterval"); syn != "" {
 		Config.SyncInterval, err = time.ParseDuration(syn)
 		if err != nil {
 			return err
 		}
+	} else {
+		Config.SyncInterval = 5 * time.Second
 	}
 	return nil
 }

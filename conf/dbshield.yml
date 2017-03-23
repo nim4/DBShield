@@ -30,6 +30,10 @@ tlsCertificate: cert/server-cert.pem
 # Directory to save internal database(default: in model directory under OS's temp directory)
 dbDir: "/tmp/model/"
 
+# Connection timeout
+# Valid units are "ns", "us" (or "µs"), "ms", "s", "m" and "h". (default: 5s)
+timeout: 5s
+
 # Databasse synchronisation interval, 0 will force sync after each commit.
 # Valid units are "ns", "us" (or "µs"), "ms", "s", "m" and "h". (default: 5s)
 SyncInterval: 5s

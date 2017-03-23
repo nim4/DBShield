@@ -3,6 +3,7 @@ package dbshield
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/signal"
@@ -116,23 +117,23 @@ func dbNameToStruct(db string) (d uint, err error) {
 }
 
 //generateDBMS instantiate a new instance of DBMS
-func generateDBMS() utils.DBMS {
+func generateDBMS() (utils.DBMS, func(io.Reader) ([]byte, error)) {
 	switch config.Config.DB {
 	case mysql:
-		return new(dbms.MySQL)
+		return new(dbms.MySQL), dbms.MySQLReadPacket
 	case postgres:
-		return new(dbms.Postgres)
+		return new(dbms.Postgres), dbms.ReadPacket //TODO: implement explicit reader
 	case oracle:
-		return new(dbms.Oracle)
+		return new(dbms.Oracle), dbms.ReadPacket //TODO: implement explicit reader
 	case db2:
-		return new(dbms.DB2)
+		return new(dbms.DB2), dbms.ReadPacket //TODO: implement explicit reader
 	default:
-		return nil
+		return nil, nil
 	}
 }
 
 func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
-	d := generateDBMS()
+	d, reader := generateDBMS()
 	logger.Debugf("Connected from: %s", listenConn.RemoteAddr())
 	serverConn, err := net.DialTCP("tcp", nil, serverAddr)
 	if err != nil {
@@ -140,10 +141,18 @@ func handleClient(listenConn net.Conn, serverAddr *net.TCPAddr) error {
 		listenConn.Close()
 		return err
 	}
+	if config.Config.Timeout > 0 {
+		if err = listenConn.SetDeadline(time.Now().Add(config.Config.Timeout)); err != nil {
+			return err
+		}
+		if err = serverConn.SetDeadline(time.Now().Add(config.Config.Timeout)); err != nil {
+			return err
+		}
+	}
 	logger.Debugf("Connected to: %s", serverConn.RemoteAddr())
 	d.SetSockets(listenConn, serverConn)
 	d.SetCertificate(config.Config.TLSCertificate, config.Config.TLSPrivateKey)
-	d.SetReader(dbms.ReadPacket)
+	d.SetReader(reader)
 	err = d.Handler()
 	if err != nil {
 		logger.Warning(err)
