@@ -36,7 +36,7 @@ func TestQueryContext(t *testing.T) {
 		t.Error("Expected Client:", r.Client, "got", c.Client)
 	}
 
-	if c.Time != r.Time {
+	if c.Time.Unix() != r.Time.Unix() {
 		t.Error("Expected Time:", r.Time, "got", c.Time)
 	}
 }
