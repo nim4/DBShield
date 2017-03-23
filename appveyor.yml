@@ -7,6 +7,7 @@ clone_folder: c:\gopath\src\github.com\nim4\DBShield
 environment:
   GOPATH: c:\gopath
   GOROOT: c:\go-x86
+  PATH: '%PATH%;c:\go-x86;c:\go-x86\bin;c:\MinGW\bin'
 
 install:
   - echo %PATH%
