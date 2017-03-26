@@ -76,6 +76,7 @@ func mysqlDummyReader(c io.Reader) (buf []byte, err error) {
 }
 
 func TestMySQL(t *testing.T) {
+	mysqlCount = 0
 	var m = dbms.MySQL{}
 	port := m.DefaultPort()
 	if m.DefaultPort() != 3306 {
@@ -154,6 +155,24 @@ func TestGetUsernameDB(t *testing.T) {
 
 	if len(u) != 0 || len(d) != 0 {
 		t.Error("Expected empty username & db name got", string(u), string(d))
+	}
+}
+
+func TestMySQLReadPacket(t *testing.T) {
+	const maxPayloadLen = 1<<24 - 1
+	var buf [maxPayloadLen]byte
+	reader := bytes.NewReader(buf[:])
+	b, err := dbms.MySQLReadPacket(reader)
+	if err != nil {
+		t.Error("Got error", err)
+	}
+	if bytes.Compare(b, buf[:]) != 0 {
+		t.Error("Unexpected output")
+	}
+	var eofReader bytes.Buffer
+	_, err = dbms.MySQLReadPacket(&eofReader)
+	if err != nil {
+		t.Error("Got error", err)
 	}
 }
 
