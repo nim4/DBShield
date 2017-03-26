@@ -5,11 +5,14 @@ import (
 	"crypto/tls"
 	"io"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/sql"
 )
+
+const maxPayloadLen = 1<<24 - 1
 
 //MySQL DBMS
 type MySQL struct {
@@ -185,11 +188,17 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	return
 }
 
+//buffer pool for MySQLReadPacket
+var dataPool = sync.Pool{
+	New: func() interface{} {
+		return make([]byte, maxPayloadLen)
+	},
+}
+
 //MySQLReadPacket handles decoding packet len and reading payload
 func MySQLReadPacket(src io.Reader) ([]byte, error) {
-	const maxPayloadLen = 1<<24 - 1
-
-	data := make([]byte, maxPayloadLen)
+	data := dataPool.Get().([]byte)
+	defer dataPool.Put(data)
 	n, err := src.Read(data)
 	if err != nil && err != io.EOF {
 		return nil, err

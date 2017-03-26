@@ -1,6 +1,7 @@
 package dbms_test
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"testing"
@@ -153,5 +154,13 @@ func TestGetUsernameDB(t *testing.T) {
 
 	if len(u) != 0 || len(d) != 0 {
 		t.Error("Expected empty username & db name got", string(u), string(d))
+	}
+}
+
+func BenchmarkMySQLReadPacket(b *testing.B) {
+	var buf [1024]byte
+	for i := 0; i < b.N; i++ {
+		s := bytes.NewReader(buf[:])
+		dbms.MySQLReadPacket(s)
 	}
 }
