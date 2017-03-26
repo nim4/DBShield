@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/nim4/DBShield/dbshield/config"
 	"github.com/nim4/DBShield/dbshield/sql"
 	"github.com/nim4/DBShield/dbshield/training"
 )
@@ -67,6 +68,8 @@ func TestAddToTrainingSet(t *testing.T) {
 }
 
 func TestCheckQuery(t *testing.T) {
+	config.Config.CheckUser = true
+	config.Config.CheckSource = true
 	c1 := sql.QueryContext{
 		Query:    []byte("select * from test;"),
 		Database: []byte("test"),
