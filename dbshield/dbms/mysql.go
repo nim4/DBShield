@@ -195,7 +195,7 @@ var dataPool = sync.Pool{
 	},
 }
 
-//MySQLReadPacket handles decoding packet len and reading payload
+//MySQLReadPacket handles reading mysql packets
 func MySQLReadPacket(src io.Reader) ([]byte, error) {
 	data := dataPool.Get().([]byte)
 	defer dataPool.Put(data)

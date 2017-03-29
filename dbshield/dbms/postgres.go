@@ -55,7 +55,7 @@ func (p *Postgres) DefaultPort() uint {
 
 //Handler gets incoming requests
 func (p *Postgres) Handler() (err error) {
-	defer handlePanic()
+	//defer handlePanic()
 	defer p.Close()
 
 	success, err := p.handleLogin()
@@ -95,9 +95,28 @@ func (p *Postgres) Handler() (err error) {
 			return
 		}
 
-		err = readWrite(p.server, p.client, p.reader)
+		//Read server response
+		buf, err = p.reader(p.server)
 		if err != nil {
 			return
+		}
+
+		//Send response to client
+		_, err = p.client.Write(buf)
+		if err != nil {
+			return
+		}
+
+		switch buf[0] {
+		case 0x45: //Error
+			buf, err = p.reader(p.server)
+			if err != nil {
+				return
+			}
+			_, err = p.client.Write(buf)
+			if err != nil {
+				return
+			}
 		}
 	}
 }
