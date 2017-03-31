@@ -12,7 +12,7 @@ import (
 	"github.com/nim4/DBShield/dbshield/sql"
 )
 
-const maxPayloadLen = 1<<24 - 1
+const maxMySQLPayloadLen = 1<<24 - 1
 
 //MySQL DBMS
 type MySQL struct {
@@ -122,7 +122,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 	}
 	data := buf[4:]
 
-	m.username, m.currentDB = GetUsernameDB(data)
+	m.username, m.currentDB = MySQLGetUsernameDB(data)
 
 	//check if ssl is required
 	ssl := (data[1] & 0x08) == 0x08
@@ -142,7 +142,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 			return
 		}
 		data = buf[4:]
-		m.username, m.currentDB = GetUsernameDB(data)
+		m.username, m.currentDB = MySQLGetUsernameDB(data)
 
 		//Send Login Request
 		_, err = m.server.Write(buf)
@@ -189,22 +189,22 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 }
 
 //buffer pool for MySQLReadPacket
-var dataPool = sync.Pool{
+var mysqlDataPool = sync.Pool{
 	New: func() interface{} {
-		return make([]byte, maxPayloadLen)
+		return make([]byte, maxMySQLPayloadLen)
 	},
 }
 
 //MySQLReadPacket handles reading mysql packets
 func MySQLReadPacket(src io.Reader) ([]byte, error) {
-	data := dataPool.Get().([]byte)
-	defer dataPool.Put(data)
+	data := mysqlDataPool.Get().([]byte)
+	defer mysqlDataPool.Put(data)
 	n, err := src.Read(data)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
 
-	if n < maxPayloadLen || err == io.EOF {
+	if n < maxMySQLPayloadLen || err == io.EOF {
 		return data[:n], nil
 	}
 
@@ -215,8 +215,8 @@ func MySQLReadPacket(src io.Reader) ([]byte, error) {
 	return append(data, buf...), nil
 }
 
-//GetUsernameDB parse packet and gets username and db name
-func GetUsernameDB(data []byte) (username, db []byte) {
+//MySQLGetUsernameDB parse packet and gets username and db name
+func MySQLGetUsernameDB(data []byte) (username, db []byte) {
 	if len(data) < 33 {
 		return
 	}

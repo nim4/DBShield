@@ -113,10 +113,10 @@ func BenchmarkMySQL(b *testing.B) {
 	}
 }
 
-func TestGetUsernameDB(t *testing.T) {
+func TestMySQLGetUsernameDB(t *testing.T) {
 	// GetUsernameDB gets buf[4:] (remove leading 4 bytes from packet dump)
 
-	u, d := dbms.GetUsernameDB([]byte{
+	u, d := dbms.MySQLGetUsernameDB([]byte{
 		5, 162, 43, 0, 1, 0, 0, 0, 45, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 119, 112, 0, 20, 220, 242, 53, 124, 75, 14, 62, 51,
@@ -131,7 +131,7 @@ func TestGetUsernameDB(t *testing.T) {
 		t.Error("Expected empty db name got", string(d))
 	}
 
-	u, d = dbms.GetUsernameDB([]byte{
+	u, d = dbms.MySQLGetUsernameDB([]byte{
 		13, 162, 43, 0, 1, 0, 0, 0, 45, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 119, 112, 0, 20, 0, 205, 124, 7, 125, 243, 111, 168,
@@ -147,7 +147,7 @@ func TestGetUsernameDB(t *testing.T) {
 		t.Error("Expected 'wp' db name", string(d))
 	}
 
-	u, d = dbms.GetUsernameDB([]byte{
+	u, d = dbms.MySQLGetUsernameDB([]byte{
 		13, 162, 43, 0, 1, 0, 0, 0, 45, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0,

@@ -104,6 +104,8 @@ func dbNameToStruct(db string) (d uint, err error) {
 	switch strings.ToLower(db) {
 	case "db2":
 		d = db2
+	case "mssql":
+		d = mssql
 	case "mysql", "mariadb":
 		d = mysql
 	case "oracle":
@@ -119,6 +121,8 @@ func dbNameToStruct(db string) (d uint, err error) {
 //generateDBMS instantiate a new instance of DBMS
 func generateDBMS() (utils.DBMS, func(io.Reader) ([]byte, error)) {
 	switch config.Config.DB {
+	case mssql:
+		return new(dbms.MSSQL), dbms.MSSQLReadPacket
 	case mysql:
 		return new(dbms.MySQL), dbms.MySQLReadPacket
 	case postgres:
