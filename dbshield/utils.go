@@ -20,6 +20,7 @@ import (
 
 const (
 	mysql = iota
+	mssql
 	postgres
 	db2
 	oracle
