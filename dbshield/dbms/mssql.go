@@ -1,8 +1,9 @@
 package dbms
 
 import (
-	"bytes"
 	"crypto/tls"
+	"errors"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -12,7 +13,14 @@ import (
 	"github.com/nim4/DBShield/dbshield/sql"
 )
 
-const maxMSSQLPayloadLen = 1<<24 - 1
+const maxMSSQLPayloadLen = 4096
+
+const (
+	mssqlEncryptionAvailableAndOff = iota
+	mssqlEncryptionAvailableAndOn
+	mssqlEncryptionNotAvailable
+	mssqlEncryptionRequired
+)
 
 //MSSQL DBMS
 type MSSQL struct {
@@ -50,13 +58,14 @@ func (m *MSSQL) Close() {
 
 //DefaultPort of the DBMS
 func (m *MSSQL) DefaultPort() uint {
-	return 3306
+	return 1433
 }
 
 //Handler gets incoming requests
 func (m *MSSQL) Handler() error {
 	defer handlePanic()
 	defer m.Close()
+
 	success, err := m.handleLogin()
 	if err != nil {
 		return err
@@ -68,19 +77,13 @@ func (m *MSSQL) Handler() error {
 	for {
 		var buf []byte
 		buf, err = m.reader(m.client)
-		if err != nil || len(buf) < 5 {
+		if err != nil || len(buf) < 8 {
 			return err
 		}
-		data := buf[4:]
 
-		switch data[0] {
-		case 0x01: //Quit
-			return nil
-		case 0x02: //UseDB
-			m.currentDB = data[1:]
-			logger.Debugf("Using database: %v", m.currentDB)
-		case 0x03: //Query
-			query := data[1:]
+		switch buf[0] {
+		case 0x01: //SQL batch
+			query := buf[8:]
 			context := sql.QueryContext{
 				Query:    query,
 				Database: m.currentDB,
@@ -89,10 +92,6 @@ func (m *MSSQL) Handler() error {
 				Time:     time.Now(),
 			}
 			processContext(context)
-			// case 0x04: //Show fields
-			// 	logger.Debugf("Show fields: %s", data[1:])
-			// default:
-			// 	logger.Debugf("Unknown Data[0]: %x", data[0])
 		}
 
 		//Send query/request to server
@@ -109,82 +108,89 @@ func (m *MSSQL) Handler() error {
 }
 
 func (m *MSSQL) handleLogin() (success bool, err error) {
-	//Receive Server Greeting
-	err = readWrite(m.server, m.client, m.reader)
-	if err != nil {
-		return
-	}
 
-	//Receive Login Request
+	//Receive PreLogin Request
 	buf, err := m.reader(m.client)
 	if err != nil {
 		return
 	}
-	data := buf[4:]
 
-	m.username, m.currentDB = MSSQLGetUsernameDB(data)
+	if buf[0] != 0x12 {
+		err = errors.New("packet is not PRELOGIN")
+		return
+	}
 
-	//check if ssl is required
-	ssl := (data[1] & 0x08) == 0x08
-
-	//Send Login Request
+	//Send PreLogin to server
 	_, err = m.server.Write(buf)
 	if err != nil {
 		return
 	}
-	if ssl {
-		m.client, m.server, err = turnSSL(m.client, m.server, m.certificate)
-		if err != nil {
-			return
-		}
-		buf, err = m.reader(m.client)
-		if err != nil {
-			return
-		}
-		data = buf[4:]
-		m.username, m.currentDB = MSSQLGetUsernameDB(data)
 
-		//Send Login Request
-		_, err = m.server.Write(buf)
-		if err != nil {
-			return
-		}
-	}
-	logger.Debugf("SSL bit: %v", ssl)
-
-	if len(m.currentDB) != 0 { //db Selected
-		//Receive OK
-		buf, err = m.reader(m.server)
-		if err != nil {
-			return
-		}
-	} else {
-		//Receive Auth Switch Request
-		err = readWrite(m.server, m.client, m.reader)
-		if err != nil {
-			return
-		}
-		//Receive Auth Switch Response
-		err = readWrite(m.client, m.server, m.reader)
-		if err != nil {
-			return
-		}
-		//Receive Response Status
-		buf, err = m.reader(m.server)
-		if err != nil {
-			return
-		}
+	//Receive PRELOGIN response
+	buf, err = m.reader(m.server)
+	if err != nil {
+		return
 	}
 
-	if buf[5] != 0x15 {
-		success = true
+	if buf[0] != 0x4 {
+		err = errors.New("packet is not PRELOGIN response")
+		return
 	}
 
-	//Send Response Status
+	//Send PreLogin to server
 	_, err = m.client.Write(buf)
 	if err != nil {
 		return
 	}
+
+	//Set data to beginning of the prelogin message
+	data := buf[8:]
+
+	var encryption byte
+
+	//Lookup Encryption
+	for i := 0; i < len(data); i += 5 {
+		switch data[i] {
+		case 0x01: //Encryption
+			encryption = data[int(data[i+1])]
+			break
+		case 0xff: //Terminator
+			break
+		}
+	}
+	logger.Debugf("Encryption: %v", encryption)
+
+	// buf, err = m.reader(m.client)
+	// if err != nil {
+	// 	return
+	// }
+	//
+	//m.username, m.currentDB = MSSQLGetUsernameDB(buf)
+
+	for {
+		//Receive PreLogin Request
+		err = readWrite(m.client, m.server, m.reader)
+		if err != nil {
+			return
+		}
+
+		//Receive PRELOGIN response
+		buf, err = m.reader(m.server)
+		if err != nil {
+			return
+		}
+
+		//Send PreLogin to server
+		_, err = m.client.Write(buf)
+		if err != nil {
+			return
+		}
+
+		if buf[0] == 0x4 {
+			break
+		}
+	}
+	success = true
 	return
 }
 
@@ -217,23 +223,7 @@ func MSSQLReadPacket(src io.Reader) ([]byte, error) {
 
 //MSSQLGetUsernameDB parse packet and gets username and db name
 func MSSQLGetUsernameDB(data []byte) (username, db []byte) {
-	if len(data) < 33 {
-		return
-	}
-	pos := 32
-
-	nullByteIndex := bytes.IndexByte(data[pos:], 0x00)
-	username = data[pos : nullByteIndex+pos]
-	logger.Debugf("Username: %s", username)
-	pos += nullByteIndex + 22
-	nullByteIndex = bytes.IndexByte(data[pos:], 0x00)
-
-	//Check if DB name is selected
-	dbSelectedCheck := len(data) > nullByteIndex+pos+1
-
-	if nullByteIndex != 0 && dbSelectedCheck {
-		db = data[pos : nullByteIndex+pos]
-		logger.Debugf("Database: %s", db)
-	}
+	//TODO: Extract Username and db name
+	fmt.Printf("%x", data)
 	return
 }
