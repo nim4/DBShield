@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/securecookie"
 	"github.com/nim4/DBShield/dbshield/config"
+	"github.com/nim4/DBShield/dbshield/logger"
 	"github.com/nim4/DBShield/dbshield/training"
 )
 
@@ -67,6 +68,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if pass == config.Config.HTTPPassword {
 		setSession(w)
 		redirectTarget = "/report.htm"
+	} else {
+		logger.Warningf("Failed login from %s[%s]", r.RemoteAddr, r.UserAgent())
 	}
 	http.Redirect(w, r, redirectTarget, 302)
 }
@@ -98,7 +101,7 @@ func setSession(w http.ResponseWriter) {
 			Name:     "session",
 			Value:    encoded,
 			Path:     "/",
-			Secure:   true,
+			Secure:   config.Config.HTTPSSL,
 			HttpOnly: true,
 		}
 		http.SetCookie(w, cookie)

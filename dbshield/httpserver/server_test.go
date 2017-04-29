@@ -94,6 +94,9 @@ func TestAPIHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	apiHandler(w, r)
 	body, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
 	if len(body) != 0 {
 		t.Error("Expected 0 length got", len(body))
 	}
@@ -104,6 +107,10 @@ func TestAPIHandler(t *testing.T) {
 	var j struct {
 		Total    int
 		Abnormal int
+	}
+	err = json.Unmarshal(body, &j)
+	if err != nil {
+		t.Error("Got an error ", err)
 	}
 	j.Total = 1
 	j.Abnormal = 1
@@ -134,7 +141,7 @@ func TestAPIHandler(t *testing.T) {
 	if err != nil {
 		t.Error("Got an error ", err)
 	}
-	if j.Total == 0 || j.Abnormal == 0 {
+	if j.Total != 1 || j.Abnormal != 1 {
 		t.Error("Expected 1, 1 got", j)
 	}
 
@@ -149,8 +156,14 @@ func TestAPIHandler(t *testing.T) {
 	defer tmpfile.Close()
 	path := tmpfile.Name()
 	training.DBCon, err = bolt.Open(path, 0600, nil)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
 	apiHandler(w, r)
 	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
 	err = json.Unmarshal(body, &j)
 	if err != nil {
 		t.Error("Got an error ", err)
@@ -158,6 +171,9 @@ func TestAPIHandler(t *testing.T) {
 
 	apiHandler(w, r)
 	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error("Got an error ", err)
+	}
 	err = json.Unmarshal(body, &j)
 	if err != nil {
 		t.Error("Got an error ", err)
