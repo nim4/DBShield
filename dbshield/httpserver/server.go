@@ -69,7 +69,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		setSession(w)
 		redirectTarget = "/report.htm"
 	} else {
-		logger.Warningf("Failed login from %s[%s]", r.RemoteAddr, r.UserAgent())
+		logger.Warningf("Failed login to web UI [%s] [%s]", r.RemoteAddr, r.UserAgent())
 	}
 	http.Redirect(w, r, redirectTarget, 302)
 }
