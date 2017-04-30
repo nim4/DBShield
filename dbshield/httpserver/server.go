@@ -3,6 +3,9 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -18,10 +21,21 @@ var cookieHandler = securecookie.New(
 )
 
 var singleHTTP sync.Once
+var assets = "assets"
 
 func serve() {
-	http.Handle("/js/", http.FileServer(http.Dir("assets")))
-	http.Handle("/css/", http.FileServer(http.Dir("assets")))
+	_, serverGoLocation, _, ok := runtime.Caller(0)
+	if ok {
+		assets = filepath.Clean(serverGoLocation + "/../../../" + assets)
+	}
+
+	if fi, err := os.Stat(assets); os.IsNotExist(err) || !fi.Mode().IsDir() {
+		logger.Warning("Could not find 'assets' directory, Web UI disabled.")
+		return
+	}
+
+	http.Handle("/js/", http.FileServer(http.Dir(assets)))
+	http.Handle("/css/", http.FileServer(http.Dir(assets)))
 	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/report.htm", mainHandler)
 	http.HandleFunc("/api", apiHandler)
@@ -41,10 +55,10 @@ func Serve() error {
 //mainHandler for html
 func mainHandler(w http.ResponseWriter, r *http.Request) {
 	if checkLogin(r) {
-		http.ServeFile(w, r, "assets/report.htm")
+		http.ServeFile(w, r, assets+"/report.htm")
 		return
 	}
-	http.ServeFile(w, r, "assets/index.htm")
+	http.ServeFile(w, r, assets+"/index.htm")
 }
 
 //apiHandler returns state
@@ -68,6 +82,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if pass == config.Config.HTTPPassword {
 		setSession(w)
 		redirectTarget = "/report.htm"
+		logger.Warningf("Successful login to web UI [%s] [%s]", r.RemoteAddr, r.UserAgent())
 	} else {
 		logger.Warningf("Failed login to web UI [%s] [%s]", r.RemoteAddr, r.UserAgent())
 	}

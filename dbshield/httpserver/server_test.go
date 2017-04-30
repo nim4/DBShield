@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -55,7 +54,6 @@ func TestServe(t *testing.T) {
 }
 
 func TestMainHandler(t *testing.T) {
-	os.Chdir("../../")
 	r, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
 		t.Error("Got an error ", err)
@@ -112,6 +110,10 @@ func TestAPIHandler(t *testing.T) {
 	if err != nil {
 		t.Error("Got an error ", err)
 	}
+	if j.Total != 0 || j.Abnormal != 0 {
+		t.Error("Expected 0, 0 got", j)
+	}
+
 	j.Total = 1
 	j.Abnormal = 1
 
@@ -141,7 +143,7 @@ func TestAPIHandler(t *testing.T) {
 	if err != nil {
 		t.Error("Got an error ", err)
 	}
-	if j.Total != 1 || j.Abnormal != 1 {
+	if j.Total != 2 || j.Abnormal != 1 {
 		t.Error("Expected 1, 1 got", j)
 	}
 
