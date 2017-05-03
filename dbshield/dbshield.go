@@ -50,7 +50,7 @@ func Purge() error {
 }
 
 //Patterns lists the captured patterns
-func Patterns() {
+func Patterns() (count int) {
 	initModel(
 		path.Join(config.Config.DBDir,
 			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
@@ -67,16 +67,18 @@ Sample: %s
 						k,
 						v,
 					)
+					count++
 				}
 				return nil
 			})
 		}
 		return nil
 	})
+	return
 }
 
 //Abnormals detected querties
-func Abnormals() {
+func Abnormals() (count int) {
 	initModel(
 		path.Join(config.Config.DBDir,
 			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
@@ -92,8 +94,25 @@ func Abnormals() {
 					c.User,
 					c.Database,
 					c.Query)
+				count++
 				return nil
 			})
+		}
+		return nil
+	})
+	return count
+}
+
+//RemovePattern deletes a pattern from captured patterns DB
+func RemovePattern(pattern string) error {
+	initModel(
+		path.Join(config.Config.DBDir,
+			config.Config.TargetIP+"_"+config.Config.DBType) + ".db")
+
+	return training.DBCon.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("pattern"))
+		if b != nil {
+			return b.Delete([]byte(pattern))
 		}
 		return nil
 	})

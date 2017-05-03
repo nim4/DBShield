@@ -21,6 +21,7 @@ func main() {
 
 	config := flag.String("c", "/etc/dbshield.yml", "config `file`")
 	listPatterns := flag.Bool("l", false, "get list of captured patterns")
+	removePattern := flag.String("r", "", "remove a captured pattern")
 	listAbnormals := flag.Bool("a", false, "get list of abnormal queries")
 	showConfig := flag.Bool("k", false, "show parsed config and exit")
 	showVersion := flag.Bool("version", false, "show version")
@@ -46,6 +47,11 @@ func main() {
 
 	if *listPatterns {
 		dbshield.Patterns()
+		return
+	}
+
+	if *removePattern != "" {
+		dbshield.RemovePattern(*removePattern)
 		return
 	}
 

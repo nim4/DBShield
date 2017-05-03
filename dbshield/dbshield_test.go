@@ -94,8 +94,9 @@ func TestEveryThing(t *testing.T) {
 		tx.CreateBucket([]byte("state"))
 		return nil
 	})
+	query := []byte("select * from test;")
 	c := sql.QueryContext{
-		Query:    []byte("select * from test;"),
+		Query:    query,
 		Database: []byte("test"),
 		User:     []byte("test"),
 		Client:   []byte("127.0.0.1"),
@@ -106,9 +107,27 @@ func TestEveryThing(t *testing.T) {
 	if err != nil {
 		t.Error("Got error", err)
 	}
+	pattern := sql.Pattern(query)
 
-	Patterns()
-	Abnormals()
+	count := Patterns()
+	if count != 1 {
+		t.Error("Expected 1 got", count)
+	}
+
+	count = Abnormals()
+	if count != 0 {
+		t.Error("Expected 0 got", count)
+	}
+
+	err = RemovePattern(string(pattern))
+	if err != nil {
+		t.Error("Expected nil got", err)
+	}
+
+	count = Patterns()
+	if count != 0 {
+		t.Error("Expected 0 got", count)
+	}
 
 	//Test without bucket
 	tmpCon := training.DBCon
@@ -125,6 +144,19 @@ func TestEveryThing(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	Patterns()
-	Abnormals()
+
+	count = Patterns()
+	if count != 0 {
+		t.Error("Expected 0 got", count)
+	}
+
+	count = Abnormals()
+	if count != 0 {
+		t.Error("Expected 0 got", count)
+	}
+
+	err = RemovePattern(string(pattern))
+	if err == nil {
+		t.Error("Expected error got", err)
+	}
 }
