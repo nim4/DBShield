@@ -3,9 +3,9 @@ package dbms
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"io"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/nim4/DBShield/dbshield/logger"
@@ -55,7 +55,7 @@ func (m *MySQL) DefaultPort() uint {
 
 //Handler gets incoming requests
 func (m *MySQL) Handler() error {
-	defer handlePanic()
+	//defer handlePanic()
 	defer m.Close()
 	success, err := m.handleLogin()
 	if err != nil {
@@ -67,7 +67,7 @@ func (m *MySQL) Handler() error {
 	}
 	for {
 		var buf []byte
-		buf, err = m.reader(m.client)
+		buf, err = ReadPacket(m.client)
 		if err != nil || len(buf) < 5 {
 			return err
 		}
@@ -110,13 +110,13 @@ func (m *MySQL) Handler() error {
 
 func (m *MySQL) handleLogin() (success bool, err error) {
 	//Receive Server Greeting
-	err = readWrite(m.server, m.client, m.reader)
+	err = readWrite(m.server, m.client, ReadPacket)
 	if err != nil {
 		return
 	}
 
 	//Receive Login Request
-	buf, err := m.reader(m.client)
+	buf, err := ReadPacket(m.client)
 	if err != nil {
 		return
 	}
@@ -137,7 +137,7 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 		if err != nil {
 			return
 		}
-		buf, err = m.reader(m.client)
+		buf, err = ReadPacket(m.client)
 		if err != nil {
 			return
 		}
@@ -154,23 +154,23 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 
 	if len(m.currentDB) != 0 { //db Selected
 		//Receive OK
-		buf, err = m.reader(m.server)
+		buf, err = ReadPacket(m.server)
 		if err != nil {
 			return
 		}
 	} else {
 		//Receive Auth Switch Request
-		err = readWrite(m.server, m.client, m.reader)
+		err = readWrite(m.server, m.client, ReadPacket)
 		if err != nil {
 			return
 		}
 		//Receive Auth Switch Response
-		err = readWrite(m.client, m.server, m.reader)
+		err = readWrite(m.client, m.server, ReadPacket)
 		if err != nil {
 			return
 		}
 		//Receive Response Status
-		buf, err = m.reader(m.server)
+		buf, err = ReadPacket(m.server)
 		if err != nil {
 			return
 		}
@@ -182,37 +182,47 @@ func (m *MySQL) handleLogin() (success bool, err error) {
 
 	//Send Response Status
 	_, err = m.client.Write(buf)
-	if err != nil {
-		return
-	}
 	return
-}
-
-//buffer pool for MySQLReadPacket
-var mysqlDataPool = sync.Pool{
-	New: func() interface{} {
-		return make([]byte, maxMySQLPayloadLen)
-	},
 }
 
 //MySQLReadPacket handles reading mysql packets
 func MySQLReadPacket(src io.Reader) ([]byte, error) {
-	data := mysqlDataPool.Get().([]byte)
-	defer mysqlDataPool.Put(data)
-	n, err := src.Read(data)
-	if err != nil && err != io.EOF {
-		return nil, err
-	}
+	data := make([]byte, maxMySQLPayloadLen)
+	var prevData []byte
+	for {
 
-	if n < maxMySQLPayloadLen || err == io.EOF {
-		return data[:n], nil
-	}
+		n, err := src.Read(data)
+		if err != nil {
+			return nil, err
+		}
+		data = data[:n]
 
-	buf, err := MySQLReadPacket(src)
-	if err != nil {
-		return nil, err
+		pktLen := int(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16)
+
+		if pktLen == 0 {
+			if prevData == nil {
+				return nil, errors.New("Malform Packet")
+			}
+
+			return prevData, nil
+		}
+
+		eof := true
+		if len(data) > 8 {
+			tail := data[len(data)-9:]
+			eof = tail[0] == 5 && tail[1] == 0 && tail[2] == 0 && tail[4] == 0xfe
+		}
+
+		if eof {
+			if prevData == nil {
+				return data, nil
+			}
+
+			return append(prevData, data...), nil
+		}
+
+		prevData = append(prevData, data...)
 	}
-	return append(data, buf...), nil
 }
 
 //MySQLGetUsernameDB parse packet and gets username and db name
