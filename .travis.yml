@@ -8,6 +8,10 @@ go:
   - 1.6
   - tip
 
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libpcap-dev
+
 script:
   - go vet ./...
   - ./test.sh
