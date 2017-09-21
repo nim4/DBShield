@@ -1,3 +1,5 @@
+// +build !windows
+
 // Converts pcap file to go byte array format to simpilify making test cases.
 
 package main
