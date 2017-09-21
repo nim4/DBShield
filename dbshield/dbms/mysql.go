@@ -55,7 +55,7 @@ func (m *MySQL) DefaultPort() uint {
 
 //Handler gets incoming requests
 func (m *MySQL) Handler() error {
-	//defer handlePanic()
+	defer handlePanic()
 	defer m.Close()
 	success, err := m.handleLogin()
 	if err != nil {
