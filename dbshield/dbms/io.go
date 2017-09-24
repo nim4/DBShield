@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	chunkSize = 256
+	chunkSize = 4096
 )
 
 //ReadPacket all available data from socket
