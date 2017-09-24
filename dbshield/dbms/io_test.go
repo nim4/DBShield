@@ -10,13 +10,13 @@ import (
 
 func TestReadWrite(t *testing.T) {
 	var s = mock.ConnMock{Error: errors.New("Dummy Error")}
-	err := readWrite(s, s, ReadPacket)
+	err := readWrite(&s, &s, ReadPacket)
 	if err == nil {
 		t.Error("Expected error")
 	}
 
 	s.Error = nil
-	err = readWrite(s, s, ReadPacket)
+	err = readWrite(&s, &s, ReadPacket)
 	if err != nil {
 		t.Error("Got error", err)
 	}

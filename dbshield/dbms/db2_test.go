@@ -335,7 +335,7 @@ func TestDB2(t *testing.T) {
 	}
 	d.SetReader(db2DummyReader)
 	var s mock.ConnMock
-	d.SetSockets(s, s)
+	d.SetSockets(&s, &s)
 	err = d.Handler()
 	if err != nil {
 		t.Error("Got error", err)

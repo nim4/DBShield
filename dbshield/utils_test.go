@@ -43,7 +43,7 @@ func TestInitLogging(t *testing.T) {
 
 func TestHandleClient(t *testing.T) {
 	var s mock.ConnMock
-	err := handleClient(s, nil)
+	err := handleClient(&s, nil)
 	if err == nil {
 		t.Error("Expected error got nil")
 	}
@@ -59,7 +59,7 @@ func TestHandleClient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = handleClient(s, ra)
+	err = handleClient(&s, ra)
 	if err == nil {
 		t.Error("Expected error got nil")
 	}

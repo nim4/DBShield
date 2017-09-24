@@ -109,7 +109,7 @@ func TestTurnSSL(t *testing.T) {
 		t.Fatal(err)
 	}
 	var s = mock.ConnMock{Error: errors.New("Dummy Error")}
-	_, _, err = turnSSL(s, s, cert)
+	_, _, err = turnSSL(&s, &s, cert)
 	if err == nil {
 		t.Error("Expected error")
 	}

@@ -78,7 +78,7 @@ func TestPostgres(t *testing.T) {
 	}
 	p.SetReader(postgresDummyReader)
 	var s mock.ConnMock
-	p.SetSockets(s, s)
+	p.SetSockets(&s, &s)
 	err = p.Handler()
 	if err != nil {
 		t.Error("Got error", err)
@@ -92,7 +92,7 @@ func BenchmarkPostgres(b *testing.B) {
 	var s mock.ConnMock
 	var p = dbms.Postgres{}
 	p.SetReader(postgresDummyReader)
-	p.SetSockets(s, s)
+	p.SetSockets(&s, &s)
 	for i := 0; i < b.N; i++ {
 		postgresCount = 0
 		err := p.Handler()

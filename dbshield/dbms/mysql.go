@@ -196,7 +196,6 @@ func MySQLReadPacket(src io.Reader) ([]byte, error) {
 			return nil, err
 		}
 		data = data[:n]
-
 		pktLen := int(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16)
 
 		if pktLen == 0 {

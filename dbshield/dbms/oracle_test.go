@@ -940,7 +940,7 @@ func TestOracle(t *testing.T) {
 	}
 	o.SetReader(oracleDummyReader)
 	var s mock.ConnMock
-	o.SetSockets(s, s)
+	o.SetSockets(&s, &s)
 	err = o.Handler()
 	if err != nil {
 		t.Error("Got error", err)

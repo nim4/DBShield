@@ -254,7 +254,7 @@ func TestMSSQL(t *testing.T) {
 	}
 	m.SetReader(mssqlDummyReader)
 	var s mock.ConnMock
-	m.SetSockets(s, s)
+	m.SetSockets(&s, &s)
 	err = m.Handler()
 	if err != nil && err.Error() != "EOF" {
 		t.Error("Got error", err)
@@ -268,7 +268,7 @@ func BenchmarkMSSQL(b *testing.B) {
 	var s mock.ConnMock
 	var m = dbms.MSSQL{}
 	m.SetReader(mssqlDummyReader)
-	m.SetSockets(s, s)
+	m.SetSockets(&s, &s)
 	for i := 0; i < b.N; i++ {
 		mssqlCount = 0
 		err := m.Handler()

@@ -31,12 +31,20 @@ func main() {
 	}
 }
 
+func hex(num int) string {
+	str := "0x"
+	if num < 16 {
+		str += "0"
+	}
+	return fmt.Sprintf("%s%X", str, int(num))
+}
+
 func run(src gopacket.PacketDataSource) {
 	dec := gopacket.DecodersByLayerName["Ethernet"]
 	source := gopacket.NewPacketSource(src, dec)
-
-	fmt.Println("var sample = [...][]byte{")
+	var c, s string
 	for packet := range source.Packets() {
+		var str *string
 		tcpLayer := packet.Layer(layers.LayerTypeTCP)
 		if tcpLayer == nil {
 			continue
@@ -46,24 +54,27 @@ func run(src gopacket.PacketDataSource) {
 		if len(payload) == 0 {
 			continue
 		}
-		fmt.Println(" {")
-		fmt.Print("    ")
+
 		if _, err := strconv.Atoi(tcp.SrcPort.String()); err != nil {
-			//no brackets, count it as server
-			fmt.Print(fromServer)
+			str = &s
 		} else {
-			fmt.Print(fromClient)
+			str = &c
 		}
-		fmt.Println(", //Direction")
-		s := "    "
+
+		*str += " {\n    "
 		for i, b := range payload {
-			s += strconv.Itoa(int(b)) + ", "
-			if i%12 == 0 && i != 0 {
-				s += "\n    "
+			*str += hex(int(b)) + ", "
+			if (i+1)%12 == 0 {
+				*str += "\n    "
 			}
 		}
-		fmt.Println(s)
-		fmt.Println(" },")
+		*str += "\n },\n"
 	}
+
+	fmt.Println("c.Buffer = [][]byte{")
+	fmt.Print(c)
+	fmt.Println("}")
+	fmt.Println("s.Buffer = [][]byte{")
+	fmt.Print(s)
 	fmt.Println("}")
 }
